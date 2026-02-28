@@ -1,102 +1,64 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix media display layout, replace YouTube with alternative video sources, and use multiple image platforms",
+  "title": "Fix Search (real internet results) and AI generators",
   "requirements": [
     {
-      "id": "REQ-27",
-      "summary": "Fix ImageGenerator component layout to always display visible generated images using multiple public image platforms with fallback behavior",
+      "id": "REQ-41",
+      "summary": "Rewrite SearchPage to deliver real internet search results for photos (Unsplash/Picsum) and videos (Pexels API with Mixkit/Coverr/Pixabay fallback pool)",
       "acceptanceCriteria": [
-        "Generated images display visibly in the ImageGenerator component after prompt submission",
-        "No broken image icons or question mark placeholders appear for generated images",
-        "Image sources are drawn from at least two different public platforms (e.g., Unsplash and Picsum/Pexels)",
-        "If one image source URL fails to load, the component falls back to an alternative platform URL"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/ImageGenerator.tsx",
-          "operation": "modify",
-          "description": "Replace single Unsplash source URL construction with multi-platform fallback logic. Implement image source prioritization: attempt Unsplash URLs first, then fall back to Picsum Photos (https://picsum.photos/) or Pexels source URLs if the primary source fails to load. Add onError handlers to <img> elements that automatically switch to the next available platform URL. Ensure the layout always renders a visible image by testing each fallback source in sequence. Update state management to track current image source and fallback attempts. Preserve existing save-to-profile and download functionality."
-        }
-      ]
-    },
-    {
-      "id": "REQ-28",
-      "summary": "Fix VideoGenerator component layout to render visible playable videos using direct MP4 URLs from alternative platforms, replacing all YouTube sources",
-      "acceptanceCriteria": [
-        "Generated videos display as an inline playable <video> element in the VideoGenerator component after prompt submission",
-        "No YouTube URLs are used anywhere in the VideoGenerator component",
-        "Video sources come from at least two alternative platforms (e.g., Mixkit CDN and Pexels direct MP4 URLs)",
-        "No broken video icons or question mark placeholders appear for generated videos",
-        "Videos play without requiring authentication or special permissions"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/VideoGenerator.tsx",
-          "operation": "modify",
-          "description": "Remove all YouTube-based video source URLs. Replace keyword-to-video mapping with direct MP4 URLs from at least two alternative platforms: use Mixkit CDN (https://assets.mixkit.co/videos/) as primary source and Pexels Videos free-tier direct MP4 links (via Pexels API or known direct URLs) as fallback. Implement multi-platform fallback: add onError handlers to the <video> element that automatically switch to the next available platform URL if the primary source fails to load. Ensure the generated video always renders as a playable inline <video> element with controls. Update the keyword mapping to reference direct MP4 URLs only. Preserve existing save, download, and share functionality."
-        }
-      ]
-    },
-    {
-      "id": "REQ-29",
-      "summary": "Fix PhotoGallery component layout to render all photos visibly using multi-platform fallback for failed image sources",
-      "acceptanceCriteria": [
-        "Photos in the PhotoGallery grid view render visibly without question mark placeholders",
-        "Photos in the PhotoGallery lightbox view render visibly",
-        "If the primary image source fails to load, a fallback image from a secondary platform is shown",
-        "Photos shared in chat messages also render without broken icons"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/PhotoGallery.tsx",
-          "operation": "modify",
-          "description": "Add multi-platform fallback logic to handle failed image loads. When rendering photos from ExternalBlob.getDirectURL(), add onError handlers to <img> elements that fall back to a secondary public image source (e.g., Picsum Photos placeholder: https://picsum.photos/800/600) if the primary stored source fails to load. Ensure both grid view and lightbox view implement this fallback behavior. Update error state handling to show fallback images instead of broken icons. Preserve existing layout, loading skeletons, and object URL cleanup logic."
-        },
-        {
-          "path": "frontend/src/components/MessageList.tsx",
-          "operation": "modify",
-          "description": "Add image fallback handling for photo attachments displayed in chat messages. When rendering image URLs in message bubbles, add onError handlers that fall back to a secondary public image platform (e.g., Picsum Photos) if the primary source fails. Ensure fallback images render visibly without broken icons. Preserve existing message bubble styling, sent/received differentiation, and scroll behavior."
-        }
-      ]
-    },
-    {
-      "id": "REQ-30",
-      "summary": "Fix VideoGallery component layout to render all videos visibly as playable inline elements using direct MP4 URLs from alternative platforms, removing YouTube sources",
-      "acceptanceCriteria": [
-        "Videos in the VideoGallery grid view render as playable <video> elements without question mark placeholders",
-        "Videos shared in chat messages render and play inline without broken icons",
-        "No YouTube URLs are used in the VideoGallery component",
-        "Video sources include at least two alternative CDN/platform options for fallback"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/VideoGallery.tsx",
-          "operation": "modify",
-          "description": "Remove any YouTube-based video source handling. Ensure all videos render as inline playable <video> elements. Add multi-platform fallback logic: when a video source from ExternalBlob fails to load, add onError handlers to <video> elements that fall back to alternative CDN sources (e.g., Mixkit, Pexels Videos, Coverr, or Pixabay direct MP4 URLs). Implement fallback video URL arrays and iterate through them on error. Ensure the layout always displays playable videos without broken icons. Preserve existing responsive grid layout, loading states, and error handling for non-video cases."
-        },
-        {
-          "path": "frontend/src/components/MessageList.tsx",
-          "operation": "modify",
-          "description": "Add video fallback handling for video attachments displayed in chat messages. Ensure videos render as inline playable <video> elements (not iframes). Add onError handlers to <video> elements that fall back to alternative platform MP4 URLs if the primary source fails. Remove any YouTube embed or iframe logic if present. Preserve existing message bubble layout and playback controls."
-        }
-      ]
-    },
-    {
-      "id": "REQ-31",
-      "summary": "Fix SearchPage photo and video tabs to display visible search results using multiple image platforms and direct MP4 video sources, replacing YouTube",
-      "acceptanceCriteria": [
-        "Photo search results display as visible images in the grid — no broken icons or question marks",
-        "Photo search uses at least two image source platforms with fallback behavior",
-        "Video search results display as playable inline <video> elements — not YouTube iframes",
-        "No YouTube URLs or embeds are used in the video search results",
-        "Video search sources come from at least two alternative platforms (e.g., Pexels API and Mixkit)"
+        "Typing a query in the photo tab and submitting returns a grid of 12 images that are visually relevant to the query.",
+        "Each photo image attempts to load from Unsplash source URL first, then falls back to Picsum if the primary fails — no broken image icons.",
+        "Typing a query in the video tab and submitting returns up to 9 inline playable <video> elements relevant to the query.",
+        "If the Pexels API key is missing or the call fails, keyword-matched fallback MP4 videos are shown instead of an error.",
+        "No search result is saved to the user's profile or visible to other users.",
+        "No random or query-unrelated placeholder content is ever shown."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/SearchPage.tsx",
           "operation": "modify",
-          "description": "For the photo search tab: replace single Unsplash source URL construction with multi-platform fallback. Attempt Unsplash URLs first, then fall back to Picsum Photos or Pexels source URLs if images fail to load. Add onError handlers to <img> elements in the photo grid that automatically switch to the next available platform. For the video search tab: remove all YouTube embed or iframe logic. Replace with direct MP4 sources from at least two alternative platforms (e.g., Pexels Videos API free tier and Mixkit). Render video search results as inline playable <video> elements with controls. Implement onError handlers on <video> elements to fall back to alternative CDN URLs if the primary source fails. Ensure both tabs display visible media without broken icons or question mark placeholders. Preserve existing lightbox functionality for photos and grid layout."
+          "description": "Rewrite the photo search tab to use the Unsplash Source URL pattern (https://source.unsplash.com/400x300/?{encodeURIComponent(query)},{index}) for 12 images with Picsum (https://picsum.photos/seed/{query}-{index}/400/300) as automatic per-image fallback on load error. Rewrite the video search tab to call the Pexels Videos API free tier (https://api.pexels.com/videos/search) using a PEXELS_API_KEY placeholder constant, displaying up to 9 inline playable <video> elements with poster thumbnails; on API failure, fall back to a curated pool of at least 40 keyword-mapped direct MP4 URLs from Mixkit/Coverr/Pixabay covering diverse categories (nature, sports, travel, animals, food, technology, music, cities, space, etc.). Remove all random, hash-based, or hardcoded placeholder logic. Ensure all results remain private and are not saved to user profiles."
+        }
+      ]
+    },
+    {
+      "id": "REQ-42",
+      "summary": "Fix ImageGenerator to reliably produce and display real AI-generated images using Pollinations AI with automatic retry logic",
+      "acceptanceCriteria": [
+        "Submitting any text prompt triggers a visible loading spinner.",
+        "A Pollinations AI image URL constructed from the prompt and a random seed is used as the <img> src.",
+        "If the image fails to load, the component automatically retries up to 3 times with different seed values before showing an error message.",
+        "The displayed image visually corresponds to the user's prompt.",
+        "No keyword mapping, hash-based, or random-placeholder logic exists in the component.",
+        "The Save to Profile and Download buttons remain functional using the resolved image URL."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ImageGenerator.tsx",
+          "operation": "modify",
+          "description": "Rewrite to use the Pollinations AI image generation API (https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?seed={seed}&width=800&height=600&nologo=true) as the sole source. Generate a unique random seed on each generation attempt. Implement automatic retry logic: on image load error (broken src, network error, or HTTP failure), retry up to 3 times using different seed values (seed+1, seed+2, seed+3) before displaying a clear user-facing error message. Show a visible loading spinner while the image is being fetched. Remove all keyword mapping, hash-based selection, or random placeholder logic. Ensure Save to Profile and Download actions remain functional using the final resolved image URL."
+        }
+      ]
+    },
+    {
+      "id": "REQ-43",
+      "summary": "Fix VideoGenerator to reliably produce and display real AI-generated or API-matched videos using Pollinations AI with Pexels API fallback",
+      "acceptanceCriteria": [
+        "Submitting any text prompt triggers a visible loading spinner.",
+        "The component first attempts the Pollinations AI video endpoint with the user's prompt.",
+        "If Pollinations fails or times out, the component falls back to the Pexels Videos API using the prompt as the search query.",
+        "The first valid video result is displayed as an inline playable <video> element with controls immediately after generation completes.",
+        "No saving or downloading is required to watch the video inline.",
+        "If both sources fail, a user-facing error message with a Retry button is shown.",
+        "No local keyword-to-video mapping exists in the component.",
+        "Save and Share buttons remain functional once a video is loaded."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VideoGenerator.tsx",
+          "operation": "modify",
+          "description": "Rewrite to call the Pollinations AI video endpoint (https://video.pollinations.ai/prompt/{encodeURIComponent(prompt)}) as the primary source and display the result as an inline <video> element with controls and autoplay muted. If that endpoint returns an error or no playable content within 10 seconds, fall back to the Pexels Videos API free tier (https://api.pexels.com/videos/search?query={encodeURIComponent(prompt)}&per_page=5&orientation=landscape) using a PEXELS_API_KEY placeholder constant; display the first valid SD-quality direct MP4 URL as an inline <video> element. Show a loading spinner during all API calls. On failure of both sources, display a clear user-facing error message with a Retry button. Remove all local keyword-to-video mapping logic. Ensure Save and Share actions remain available after a video is loaded."
         }
       ]
     }

@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 
 export default function ChatPage() {
-  const { partnerUsername } = useParams({ from: '/layout/chat/$partnerUsername' });
+  const { username: partnerUsername } = useParams({ from: '/chat/$username' });
   const navigate = useNavigate();
   const { username } = useAuth();
   const [messageText, setMessageText] = useState('');
@@ -54,7 +54,7 @@ export default function ChatPage() {
     .slice(0, 2);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-2xl mx-auto">
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-2xl mx-auto px-4 py-4">
       {/* Chat header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border">
         <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/contacts' })}>

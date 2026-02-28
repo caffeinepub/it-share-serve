@@ -1,33 +1,23 @@
-import { RouterProvider, createRouter, createRootRoute, createRoute, Outlet } from '@tanstack/react-router';
-import { useAuth } from './hooks/useAuth';
+import React from 'react';
+import { createRouter, createRoute, createRootRoute, RouterProvider, redirect } from '@tanstack/react-router';
 import Layout from './components/Layout';
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import HomePage from './pages/HomePage';
+import ProfilePage from './pages/ProfilePage';
 import ContactsPage from './pages/ContactsPage';
 import ChatPage from './pages/ChatPage';
-import ProfilePage from './pages/ProfilePage';
 import CreatePage from './pages/CreatePage';
 import SearchPage from './pages/SearchPage';
 import SettingsPage from './pages/SettingsPage';
+import { useAuth } from './hooks/useAuth';
 
-// Protected layout wrapper — must be a named component so hooks are valid
-function ProtectedLayout() {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-  return (
-    <Layout>
-      <Outlet />
-    </Layout>
-  );
-}
-
+// Root route with layout
 const rootRoute = createRootRoute({
-  component: () => <Outlet />,
+  component: Layout,
 });
 
+// Public routes
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
@@ -40,50 +30,45 @@ const registerRoute = createRoute({
   component: RegisterPage,
 });
 
-const layoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: 'layout',
-  component: ProtectedLayout,
-});
-
+// Protected routes
 const homeRoute = createRoute({
-  getParentRoute: () => layoutRoute,
+  getParentRoute: () => rootRoute,
   path: '/',
   component: HomePage,
 });
 
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile',
+  component: ProfilePage,
+});
+
 const contactsRoute = createRoute({
-  getParentRoute: () => layoutRoute,
+  getParentRoute: () => rootRoute,
   path: '/contacts',
   component: ContactsPage,
 });
 
 const chatRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/chat/$partnerUsername',
+  getParentRoute: () => rootRoute,
+  path: '/chat/$username',
   component: ChatPage,
 });
 
-const profileRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/profile',
-  component: ProfilePage,
-});
-
 const createRoute_ = createRoute({
-  getParentRoute: () => layoutRoute,
+  getParentRoute: () => rootRoute,
   path: '/create',
   component: CreatePage,
 });
 
 const searchRoute = createRoute({
-  getParentRoute: () => layoutRoute,
+  getParentRoute: () => rootRoute,
   path: '/search',
   component: SearchPage,
 });
 
 const settingsRoute = createRoute({
-  getParentRoute: () => layoutRoute,
+  getParentRoute: () => rootRoute,
   path: '/settings',
   component: SettingsPage,
 });
@@ -91,15 +76,13 @@ const settingsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
-  layoutRoute.addChildren([
-    homeRoute,
-    contactsRoute,
-    chatRoute,
-    profileRoute,
-    createRoute_,
-    searchRoute,
-    settingsRoute,
-  ]),
+  homeRoute,
+  profileRoute,
+  contactsRoute,
+  chatRoute,
+  createRoute_,
+  searchRoute,
+  settingsRoute,
 ]);
 
 const router = createRouter({ routeTree });

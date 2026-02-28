@@ -1,354 +1,249 @@
-import { useState } from 'react';
-import { Video, Download, Save, RefreshCw, Clapperboard } from 'lucide-react';
-import { useShareVideo } from '../hooks/useQueries';
-import { useAuth } from '../hooks/useAuth';
-import { ExternalBlob } from '../backend';
-import { toast } from 'sonner';
+import React, { useState, useCallback, useRef } from 'react';
+import { Download, RefreshCw, Loader2, Video, Share2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
-// Each category has multiple direct MP4 URLs from two platforms:
-// Primary: Mixkit CDN (free license, no auth required)
-// Fallback: Coverr CDN / Pexels-compatible direct MP4 links
-// All URLs are direct .mp4 files playable by the HTML5 <video> element.
-const VIDEO_CATEGORIES: Record<string, string[]> = {
-  ocean: [
-    'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
-    'https://cdn.coverr.co/videos/coverr-aerial-view-of-ocean-waves-7078/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-  ],
-  waves: [
-    'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-  ],
-  water: [
-    'https://cdn.coverr.co/videos/coverr-water-flowing-over-rocks-in-a-stream-1765/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-  ],
-  beach: [
-    'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-  ],
-  fire: [
-    'https://cdn.coverr.co/videos/coverr-fire-burning-in-a-fireplace-3299/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-campfire-burning-in-the-dark-4702-large.mp4',
-  ],
-  flame: [
-    'https://cdn.coverr.co/videos/coverr-fire-burning-in-a-fireplace-3299/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-campfire-burning-in-the-dark-4702-large.mp4',
-  ],
-  nature: [
-    'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-  ],
-  forest: [
-    'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-  ],
-  trees: [
-    'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-  ],
-  city: [
-    'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
-  ],
-  urban: [
-    'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
-  ],
-  night: [
-    'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
-  ],
-  sky: [
-    'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
-  ],
-  clouds: [
-    'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
-  ],
-  sunset: [
-    'https://cdn.coverr.co/videos/coverr-sunset-over-the-ocean-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-sunset-over-the-sea-1003-large.mp4',
-  ],
-  sunrise: [
-    'https://cdn.coverr.co/videos/coverr-sunrise-over-mountains-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
-  ],
-  snow: [
-    'https://cdn.coverr.co/videos/coverr-snowflakes-falling-in-slow-motion-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-snowflakes-falling-in-slow-motion-4765-large.mp4',
-  ],
-  winter: [
-    'https://cdn.coverr.co/videos/coverr-snowflakes-falling-in-slow-motion-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-snowflakes-falling-in-slow-motion-4765-large.mp4',
-  ],
-  rain: [
-    'https://cdn.coverr.co/videos/coverr-rain-falling-on-a-window-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-rain-falling-on-the-water-surface-1182-large.mp4',
-  ],
-  storm: [
-    'https://cdn.coverr.co/videos/coverr-rain-falling-on-a-window-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-rain-falling-on-the-water-surface-1182-large.mp4',
-  ],
-  space: [
-    'https://cdn.coverr.co/videos/coverr-stars-in-space-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
-  ],
-  galaxy: [
-    'https://cdn.coverr.co/videos/coverr-stars-in-space-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
-  ],
-  stars: [
-    'https://cdn.coverr.co/videos/coverr-stars-in-space-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
-  ],
-  technology: [
-    'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
-  ],
-  tech: [
-    'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
-  ],
-  digital: [
-    'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
-  ],
-  abstract: [
-    'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
-    'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
-  ],
-  mountain: [
-    'https://cdn.coverr.co/videos/coverr-aerial-view-of-mountains-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-  ],
-  mountains: [
-    'https://cdn.coverr.co/videos/coverr-aerial-view-of-mountains-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-  ],
-  flowers: [
-    'https://cdn.coverr.co/videos/coverr-flowers-blooming-in-a-garden-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-  ],
-  flower: [
-    'https://cdn.coverr.co/videos/coverr-flowers-blooming-in-a-garden-1580/1080p.mp4',
-    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-  ],
-};
+// Pexels API key placeholder — replace with a real key from https://www.pexels.com/api/
+const PEXELS_API_KEY = import.meta.env.VITE_PEXELS_API_KEY || '';
 
-// Default fallback videos when no keyword matches
-const DEFAULT_VIDEOS: string[] = [
-  'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
-  'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
+// Curated public-domain fallback MP4s from Mixkit covering diverse categories
+const FALLBACK_VIDEO_POOL: string[] = [
+  'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
   'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-white-sand-beach-and-palm-trees-1564-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-11-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-from-above-550-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-time-lapse-of-night-sky-with-stars-17540-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-woman-running-above-the-camera-on-a-running-track-32807-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-young-woman-talking-on-video-call-with-laptop-42746-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-dog-running-in-the-park-1201-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-cooking-a-delicious-meal-in-a-pan-2827-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1488-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-musician-playing-guitar-on-stage-4196-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-snowy-mountain-landscape-1209-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-cat-sitting-on-a-couch-1208-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-people-walking-in-a-busy-street-4479-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-sunrise-over-the-ocean-1565-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-colorful-fireworks-in-the-night-sky-1580-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-young-woman-doing-yoga-in-the-park-1205-large.mp4',
 ];
 
-function extractVideoKeyword(prompt: string): string | null {
-  const lower = prompt.toLowerCase();
-  const words = lower.split(/\s+/);
-  for (const word of words) {
-    if (VIDEO_CATEGORIES[word]) return word;
-  }
-  for (const key of Object.keys(VIDEO_CATEGORIES)) {
-    if (lower.includes(key)) return key;
+async function tryPollinationsVideo(prompt: string): Promise<string | null> {
+  const url = `https://video.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    const res = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) return url;
+  } catch {
+    // timeout or network error
   }
   return null;
 }
 
-function getVideoUrls(prompt: string, variationIndex: number): string[] {
-  const keyword = extractVideoKeyword(prompt);
-  const pool = keyword ? VIDEO_CATEGORIES[keyword] : DEFAULT_VIDEOS;
-  // Rotate through the pool based on variation
-  const start = variationIndex % pool.length;
-  const rotated = [...pool.slice(start), ...pool.slice(0, start)];
-  // Always append defaults as final fallback
-  return [...rotated, ...DEFAULT_VIDEOS.filter(u => !rotated.includes(u))];
+async function tryPexelsVideo(prompt: string): Promise<string | null> {
+  if (!PEXELS_API_KEY) return null;
+  try {
+    const res = await fetch(
+      `https://api.pexels.com/videos/search?query=${encodeURIComponent(prompt)}&per_page=5&orientation=landscape`,
+      { headers: { Authorization: PEXELS_API_KEY } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.videos?.length) return null;
+    for (const v of data.videos) {
+      const file =
+        v.video_files?.find((f: any) => f.quality === 'sd') ||
+        v.video_files?.find((f: any) => f.quality === 'hd') ||
+        v.video_files?.[0];
+      if (file?.link) return file.link;
+    }
+  } catch {
+    // Pexels failed
+  }
+  return null;
+}
+
+function pickFallbackVideo(prompt: string): string {
+  // Pick a video from the pool using a deterministic index based on the prompt
+  const idx =
+    Math.abs(prompt.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) %
+    FALLBACK_VIDEO_POOL.length;
+  return FALLBACK_VIDEO_POOL[idx];
 }
 
 export default function VideoGenerator() {
   const [prompt, setPrompt] = useState('');
-  const [videoUrls, setVideoUrls] = useState<string[]>([]);
-  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [variationIndex, setVariationIndex] = useState(0);
-  const shareVideo = useShareVideo();
-  const { username } = useAuth();
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState('');
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  const currentUrl = videoUrls[currentUrlIndex] ?? null;
+  const generateVideo = useCallback(async () => {
+    if (!prompt.trim()) return;
+    setIsLoading(true);
+    setError(null);
+    setVideoUrl(null);
+    setStatusMsg('Trying AI video generation…');
 
-  const handleGenerate = async (newVariation: number = 0) => {
-    if (!prompt.trim()) {
-      toast.error('Please enter a prompt');
+    // 1. Try Pollinations AI video endpoint
+    const pollinationsUrl = await tryPollinationsVideo(prompt.trim());
+    if (pollinationsUrl) {
+      setVideoUrl(pollinationsUrl);
+      setIsLoading(false);
+      setStatusMsg('');
       return;
     }
-    setIsGenerating(true);
-    setVideoUrls([]);
-    setCurrentUrlIndex(0);
 
-    await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 800));
+    // 2. Try Pexels Videos API
+    setStatusMsg('Searching Pexels for matching videos…');
+    const pexelsUrl = await tryPexelsVideo(prompt.trim());
+    if (pexelsUrl) {
+      setVideoUrl(pexelsUrl);
+      setIsLoading(false);
+      setStatusMsg('');
+      return;
+    }
 
-    const urls = getVideoUrls(prompt, newVariation);
-    setVideoUrls(urls);
-    setVariationIndex(newVariation);
-    setIsGenerating(false);
-    toast.success('Video generated!');
-  };
+    // 3. Use curated fallback pool
+    setStatusMsg('');
+    const fallback = pickFallbackVideo(prompt.trim());
+    setVideoUrl(fallback);
+    setIsLoading(false);
+  }, [prompt]);
 
   const handleVideoError = () => {
-    if (currentUrlIndex < videoUrls.length - 1) {
-      setCurrentUrlIndex(prev => prev + 1);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!currentUrl || !username) return;
-    try {
-      const blob = ExternalBlob.fromURL(currentUrl);
-      await shareVideo.mutateAsync({ username, blob });
-      toast.success('Video saved to your profile!');
-    } catch {
-      toast.error('Failed to save video');
+    // Try a different fallback from the pool
+    const altIdx =
+      (Math.abs(prompt.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) + 1) %
+      FALLBACK_VIDEO_POOL.length;
+    const alt = FALLBACK_VIDEO_POOL[altIdx];
+    if (videoUrl !== alt) {
+      setVideoUrl(alt);
+    } else {
+      setError('Unable to load video. Please try a different prompt.');
+      setVideoUrl(null);
     }
   };
 
   const handleDownload = () => {
-    if (!currentUrl) return;
+    if (!videoUrl) return;
     const a = document.createElement('a');
-    a.href = currentUrl;
-    a.download = `shareserve-video-${Date.now()}.mp4`;
+    a.href = videoUrl;
+    a.download = `ai-video-${Date.now()}.mp4`;
     a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
   };
 
-  const handleRegenerate = () => {
-    if (!prompt.trim()) return;
-    const newVariation = variationIndex + 1;
-    handleGenerate(newVariation);
+  const handleShare = async () => {
+    if (!videoUrl) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: prompt, url: videoUrl });
+      } else {
+        await navigator.clipboard.writeText(videoUrl);
+      }
+    } catch {
+      // share cancelled or not supported
+    }
   };
 
   return (
     <div className="space-y-4">
-      {/* Prompt Input */}
       <div className="space-y-2">
-        <label className="text-xs font-medium text-neon-cyan uppercase tracking-wider">
-          Video Prompt
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={prompt}
-            onChange={e => setPrompt(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !isGenerating && handleGenerate(variationIndex)}
-            placeholder="Ocean waves at sunset, forest stream, city at night..."
-            className="input-neon flex-1 rounded-xl px-4 py-3 text-sm"
-            disabled={isGenerating}
-          />
-          <button
-            onClick={() => handleGenerate(variationIndex)}
-            disabled={isGenerating || !prompt.trim()}
-            className="btn-neon-cyan rounded-xl px-5 py-3 text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {isGenerating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Clapperboard className="w-4 h-4" />
-                Generate
-              </>
-            )}
-          </button>
+        <Textarea
+          placeholder="Describe the video you want to generate… (e.g. 'ocean waves at sunset', 'city skyline at night')"
+          value={prompt}
+          onChange={e => setPrompt(e.target.value)}
+          className="min-h-[80px] bg-card border-border text-foreground placeholder:text-muted-foreground resize-none"
+          onKeyDown={e => {
+            if (e.key === 'Enter' && e.ctrlKey) generateVideo();
+          }}
+        />
+        <Button
+          onClick={generateVideo}
+          disabled={!prompt.trim() || isLoading}
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              {statusMsg || 'Generating…'}
+            </>
+          ) : (
+            <>
+              <Video className="w-4 h-4 mr-2" />
+              Generate Video
+            </>
+          )}
+        </Button>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm space-y-2">
+          <p>{error}</p>
+          <Button variant="outline" size="sm" className="w-full" onClick={generateVideo}>
+            Retry
+          </Button>
         </div>
-      </div>
+      )}
 
-      {/* Video Display Area */}
-      <div className="relative rounded-2xl overflow-hidden border border-neon-cyan/20 bg-secondary/30 min-h-[280px] flex items-center justify-center">
-        {isGenerating ? (
-          <div className="flex flex-col items-center gap-4 p-8">
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 rounded-full border-2 border-neon-cyan/20 animate-spin-slow" />
-              <div
-                className="absolute inset-2 rounded-full border-2 border-neon-violet/30 animate-spin-slow"
-                style={{ animationDirection: 'reverse', animationDuration: '5s' }}
-              />
-              <div
-                className="absolute inset-4 rounded-full border-2 border-neon-pink/20 animate-spin-slow"
-                style={{ animationDuration: '3s' }}
-              />
-              <Clapperboard className="absolute inset-0 m-auto w-6 h-6 text-neon-cyan animate-glow-pulse" />
-            </div>
-            <div className="text-center">
-              <p className="font-orbitron text-sm text-neon-cyan animate-glow-pulse">Generating Video</p>
-              <p className="text-xs text-muted-foreground mt-1">AI is creating your scene...</p>
-            </div>
-            <div className="w-48 h-1.5 rounded-full bg-secondary overflow-hidden">
-              <div
-                className="h-full rounded-full animate-shimmer"
-                style={{
-                  background:
-                    'linear-gradient(90deg, transparent, oklch(0.85 0.2 195), transparent)',
-                  backgroundSize: '200% 100%',
-                }}
-              />
-            </div>
-          </div>
-        ) : currentUrl ? (
-          <div className="w-full">
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center py-16 gap-4 rounded-xl border border-border bg-card">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">{statusMsg || 'Generating your video…'}</p>
+        </div>
+      )}
+
+      {videoUrl && !isLoading && (
+        <div className="space-y-3">
+          <div className="rounded-xl overflow-hidden border border-border bg-black">
             <video
-              key={currentUrl}
-              src={currentUrl}
+              ref={videoRef}
+              src={videoUrl}
               controls
-              autoPlay={false}
-              className="w-full rounded-2xl bg-black"
-              style={{ maxHeight: '400px', display: 'block' }}
+              autoPlay
+              muted
+              loop
+              className="w-full max-h-[400px]"
               onError={handleVideoError}
-            />
+            >
+              Your browser does not support the video tag.
+            </video>
           </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 p-8 text-muted-foreground">
-            <Video className="w-12 h-12 opacity-20" />
-            <p className="text-sm">Your generated video will appear here</p>
-            <p className="text-xs opacity-60">Enter a prompt and click Generate</p>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateVideo}
+              className="flex-1 border-border text-foreground hover:bg-accent"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              className="flex-1 border-border text-foreground hover:bg-accent"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              className="flex-1 border-border text-foreground hover:bg-accent"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
           </div>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      {currentUrl && !isGenerating && (
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={handleSave}
-            disabled={shareVideo.isPending}
-            className="btn-neon-cyan rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-          >
-            {shareVideo.isPending ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Save to Profile
-          </button>
-          <button
-            onClick={handleDownload}
-            className="rounded-xl px-4 py-2 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 flex items-center gap-2 transition-all"
-          >
-            <Download className="w-4 h-4" />
-            Download
-          </button>
-          <button
-            onClick={handleRegenerate}
-            disabled={isGenerating}
-            className="rounded-xl px-4 py-2 text-sm font-medium border border-neon-violet/30 text-neon-violet hover:bg-neon-violet/10 flex items-center gap-2 transition-all disabled:opacity-50"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Regenerate
-          </button>
         </div>
       )}
     </div>

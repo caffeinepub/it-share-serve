@@ -1,21 +1,24 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 13,
+  "projectStateVersion": 21,
   "summary": "ShareServe is an instant messaging app with photo and video sharing, AI image and video generation, account creation with custom username/profile number, contacts system, dark theme UI, text effects, and visual polish. Messaging is between in-app accounts only. AI generation follows standard content policies. Authentication uses Apple or Google login instead of Internet Identity.",
   "architectural_notes": [
     "Messaging is in-app only; no external SMS or phone network integration",
     "AI generation features must follow standard content policies — no unregulated generation",
     "Authentication uses Apple or Google OAuth — Internet Identity is not used",
     "Web photo/video search results are private — not displayed on user profile, feed, or any shared area",
-    "Do not use YouTube as a video source — use alternative platforms (e.g., Pexels, Mixkit, Coverr) for video playback"
+    "Do not use YouTube as a video source — use alternative platforms (e.g., Pexels, Mixkit, Coverr) for video playback",
+    "In-app search should use a real embedded web browser or WebView rather than keyword-mapped placeholder results",
+    "Search (photo and video) must be backed by a real browser-based search, not keyword maps or a standalone iframe browser tab"
   ],
   "known_issues": [
     "Account registration is broken and needs to be fixed alongside the auth migration to Apple/Google login",
-    "AI generators (image and video) are not respecting user prompts — generating random unrelated content",
     "Photos and videos are not displaying in the app (profile feed, chat, or search results)",
     "AI video generator does not show generated videos inline — users cannot tap to watch without saving",
     "Videos in search results or generator appear to be censored/restricted — user wants uncensored video content displayed",
-    "Videos and images show a question mark placeholder and are not rendering — layout needs to be fixed"
+    "Videos and images show a question mark placeholder and are not rendering — layout needs to be fixed",
+    "Search page returns random/unrelated photos and videos instead of query-relevant results — search logic is not connected to user input",
+    "AI image and video generators are returning errors — current API integrations are broken and must be replaced with working alternatives"
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -242,6 +245,102 @@
         "REQ-31"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-rewrite-the-searchpage-video-search-tab-so-that-results-are-directly-driven-by-the-user-s-search-query-when-the-user-submits-a-query-fetch-or-select-video-results-that-are-semantically-relevant-to-the-query-text-not-random-or-deterministic-but-unrelated-placeholders-use-a-curated-keyword-to-video-mapping-covering-a-wide-variety-of-categories-nature-sports-travel-animals-food-technology-music-people-cities-ocean-mountains-cars-space-art-etc-with-at-least-40-distinct-topic-entries-each-topic-must-map-to-a-direct-publicly-accessible-mp4-url-from-mixkit-coverr-pixabay-or-pexels-free-tier-when-no-exact-keyword-match-is-found-fall-back-to-a-broad-general-pool-of-diverse-videos-rather-than-a-fixed-placeholder",
+      "title": "Rewrite the SearchPage video search tab so that results are directly driven by the user's search query. When the user submits a query, fetch or select video results that are semantically relevant to the query text — not random or deterministic-but-unrelated placeholders. Use a curated keyword-to-video mapping covering a wide variety of categories (nature, sports, travel, animals, food, technology, music, people, cities, ocean, mountains, cars, space, art, etc.) with at least 40 distinct topic entries. Each topic must map to a direct publicly accessible MP4 URL from Mixkit, Coverr, Pixabay, or Pexels free-tier. When no exact keyword match is found, fall back to a broad 'general' pool of diverse videos rather than a fixed placeholder.",
+      "reqIds": [
+        "REQ-32"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rewrite-the-searchpage-photo-search-tab-so-that-photo-results-are-directly-driven-by-the-user-s-search-query-when-the-user-submits-a-query-construct-image-urls-using-the-query-text-as-a-keyword-via-unsplash-source-urls-e-g-https-source-unsplash-com-400x300-query-index-so-that-displayed-photos-are-visually-relevant-to-what-the-user-typed-add-picsum-as-a-secondary-fallback-if-unsplash-urls-fail-to-load-remove-any-logic-that-generates-random-or-query-unrelated-photo-results",
+      "title": "Rewrite the SearchPage photo search tab so that photo results are directly driven by the user's search query. When the user submits a query, construct image URLs using the query text as a keyword via Unsplash source URLs (e.g., `https://source.unsplash.com/400x300/?{query},{index}`) so that displayed photos are visually relevant to what the user typed. Add Picsum as a secondary fallback if Unsplash URLs fail to load. Remove any logic that generates random or query-unrelated photo results.",
+      "reqIds": [
+        "REQ-33"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-existing-searchpage-keyword-mapped-search-with-a-full-in-app-web-browser-experience-add-a-dedicated-browser-tab-or-screen-accessible-from-the-main-navigation-embed-a-functional-web-browsing-interface-using-an-iframe-that-allows-users-to-navigate-to-any-url-include-an-address-bar-where-users-can-type-a-url-or-a-search-query-queries-should-be-routed-through-a-search-engine-such-as-duckduckgo-or-google-via-url-e-g-https-www-google-com-search-q-query-a-go-enter-button-to-navigate-and-back-forward-refresh-controls-the-browser-content-must-render-inside-the-app-within-the-iframe-apply-the-existing-neon-dark-theme-to-the-browser-chrome-address-bar-navigation-buttons-browser-activity-must-remain-private-and-must-not-affect-the-user-s-profile-feed-or-be-visible-to-other-users",
+      "title": "Replace the existing SearchPage keyword-mapped search with a full in-app web browser experience. Add a dedicated 'Browser' tab or screen accessible from the main navigation. Embed a functional web browsing interface using an <iframe> that allows users to navigate to any URL. Include an address bar where users can type a URL or a search query (queries should be routed through a search engine such as DuckDuckGo or Google via URL, e.g., https://www.google.com/search?q={query}), a Go/Enter button to navigate, and back/forward/refresh controls. The browser content must render inside the app within the iframe. Apply the existing neon dark theme to the browser chrome (address bar, navigation buttons). Browser activity must remain private and must not affect the user's profile, feed, or be visible to other users.",
+      "reqIds": [
+        "REQ-34"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-imagegenerator-component-s-current-keyword-to-picsum-url-mapping-with-calls-to-the-pollinations-ai-image-generation-api-https-image-pollinations-ai-prompt-encoded-prompt-which-is-free-requires-no-api-key-and-returns-a-real-ai-generated-image-for-any-text-prompt-when-the-user-submits-a-prompt-construct-the-url-as-https-image-pollinations-ai-prompt-encodeuricomponent-prompt-and-display-the-returned-image-inline-show-a-loading-state-while-the-image-is-being-generated-on-load-error-retry-with-a-slightly-modified-seed-parameter-e-g-append-seed-2-seed-3-up-to-three-times-before-showing-an-error-message-remove-all-keyword-mapping-hash-based-and-random-selection-logic-the-save-and-download-actions-must-remain-functional-using-the-ai-generated-image-url",
+      "title": "Replace the ImageGenerator component's current keyword-to-Picsum-URL mapping with calls to the Pollinations AI image generation API (https://image.pollinations.ai/prompt/{encoded_prompt}), which is free, requires no API key, and returns a real AI-generated image for any text prompt. When the user submits a prompt, construct the URL as https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)} and display the returned image inline. Show a loading state while the image is being generated. On load error, retry with a slightly modified seed parameter (e.g., append ?seed=2, ?seed=3) up to three times before showing an error message. Remove all keyword mapping, hash-based, and random selection logic. The save and download actions must remain functional using the AI-generated image URL.",
+      "reqIds": [
+        "REQ-35"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-videogenerator-component-s-current-keyword-to-mp4-url-mapping-with-calls-to-the-pollinations-ai-text-to-video-or-a-suitable-free-generative-video-api-as-a-primary-approach-use-the-pollinations-video-generation-endpoint-if-available-or-alternatively-use-the-replicate-hosted-open-inference-endpoint-for-a-free-video-model-accessible-without-authentication-if-no-true-generative-video-api-is-freely-available-without-an-api-key-implement-the-following-best-effort-approach-use-the-pexels-videos-api-free-tier-api-key-use-a-placeholder-comment-for-the-developer-to-insert-their-key-to-fetch-a-video-that-is-semantically-matched-to-the-full-prompt-text-via-pexels-search-endpoint-https-api-pexels-com-videos-search-query-prompt-per-page-1-display-the-first-result-s-sd-video-file-as-an-inline-video-element-the-key-requirement-is-that-the-result-must-be-driven-by-the-actual-prompt-text-submitted-to-an-external-api-not-a-local-keyword-map-remove-all-local-keyword-to-video-mapping-logic-display-the-video-as-an-inline-playable-video-element-immediately-after-generation-completes-show-a-loading-state-during-the-api-call-save-and-share-actions-must-remain-available",
+      "title": "Replace the VideoGenerator component's current keyword-to-MP4-URL mapping with calls to the Pollinations AI text-to-video or a suitable free generative video API. As a primary approach, use the Pollinations video generation endpoint if available, or alternatively use the Replicate-hosted open inference endpoint for a free video model accessible without authentication. If no true generative video API is freely available without an API key, implement the following best-effort approach: use the Pexels Videos API (free tier, API key: use a placeholder comment for the developer to insert their key) to fetch a video that is semantically matched to the full prompt text via Pexels search endpoint (https://api.pexels.com/videos/search?query={prompt}&per_page=1), display the first result's SD video file as an inline <video> element. The key requirement is that the result must be driven by the actual prompt text submitted to an external API — not a local keyword map. Remove all local keyword-to-video mapping logic. Display the video as an inline playable <video> element immediately after generation completes. Show a loading state during the API call. Save and share actions must remain available.",
+      "reqIds": [
+        "REQ-36"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rewrite-the-imagegenerator-component-to-use-the-pollinations-ai-image-generation-api-https-image-pollinations-ai-prompt-encodeuricomponent-prompt-seed-seed-width-800-height-600-nologo-true-as-the-primary-source-add-a-unique-random-seed-per-generation-attempt-on-image-load-error-automatically-retry-up-to-3-times-with-different-seed-values-seed-2-seed-3-seed-4-before-displaying-a-user-facing-error-message-show-a-visible-loading-spinner-state-while-the-image-is-being-fetched-remove-all-local-keyword-mapping-hash-based-or-random-selection-logic-the-displayed-image-must-be-the-actual-pollinations-ai-result-for-the-user-s-prompt-save-to-profile-and-download-actions-must-remain-functional-using-the-final-resolved-image-url",
+      "title": "Rewrite the ImageGenerator component to use the Pollinations AI image generation API (https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?seed={seed}&width=800&height=600&nologo=true) as the primary source. Add a unique random seed per generation attempt. On image load error, automatically retry up to 3 times with different seed values (seed=2, seed=3, seed=4) before displaying a user-facing error message. Show a visible loading spinner/state while the image is being fetched. Remove all local keyword mapping, hash-based, or random selection logic. The displayed image must be the actual Pollinations AI result for the user's prompt. Save-to-profile and download actions must remain functional using the final resolved image URL.",
+      "reqIds": [
+        "REQ-37"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rewrite-the-videogenerator-component-to-call-the-pollinations-ai-video-endpoint-https-video-pollinations-ai-prompt-encodeuricomponent-prompt-as-the-primary-approach-if-that-endpoint-is-unavailable-or-returns-an-error-fall-back-to-fetching-from-the-pexels-videos-api-free-tier-using-the-search-endpoint-https-api-pexels-com-videos-search-query-encodeuricomponent-prompt-per-page-5-orientation-landscape-with-api-key-inserted-via-environment-variable-or-a-clearly-marked-placeholder-constant-display-the-first-valid-result-s-sd-quality-direct-mp4-url-in-an-inline-video-element-with-controls-autoplay-muted-show-a-loading-spinner-during-the-api-call-on-error-from-both-sources-display-a-clear-user-facing-error-message-with-a-retry-button-remove-all-local-keyword-to-video-mapping-logic-save-and-share-actions-must-remain-available-after-a-video-is-loaded",
+      "title": "Rewrite the VideoGenerator component to call the Pollinations AI video endpoint (https://video.pollinations.ai/prompt/{encodeURIComponent(prompt)}) as the primary approach. If that endpoint is unavailable or returns an error, fall back to fetching from the Pexels Videos API free tier using the search endpoint (https://api.pexels.com/videos/search?query={encodeURIComponent(prompt)}&per_page=5&orientation=landscape) with API key inserted via environment variable or a clearly marked placeholder constant. Display the first valid result's SD-quality direct MP4 URL in an inline <video> element with controls, autoplay muted. Show a loading spinner during the API call. On error from both sources, display a clear user-facing error message with a retry button. Remove all local keyword-to-video mapping logic. Save and share actions must remain available after a video is loaded.",
+      "reqIds": [
+        "REQ-38"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rewrite-the-searchpage-so-that-both-the-photo-search-tab-and-video-search-tab-are-powered-by-real-external-api-calls-driven-by-the-user-s-actual-query-text-for-photo-search-call-the-unsplash-source-url-pattern-https-source-unsplash-com-400x300-encodeuricomponent-query-index-to-construct-a-grid-of-12-query-relevant-images-add-picsum-https-picsum-photos-seed-query-index-400-300-as-an-automatic-fallback-per-image-if-the-unsplash-url-fails-to-load-for-video-search-call-the-pexels-videos-api-free-tier-https-api-pexels-com-videos-search-query-encodeuricomponent-query-per-page-9-using-an-api-key-from-an-environment-variable-or-a-clearly-marked-placeholder-display-results-as-inline-playable-video-elements-with-poster-thumbnails-fall-back-to-a-curated-set-of-direct-public-domain-mp4-urls-from-mixkit-or-coverr-if-the-api-call-fails-or-returns-no-results-all-results-must-be-query-relevant-remove-any-random-hash-based-or-hardcoded-placeholder-result-logic-results-must-remain-private-not-saved-to-profile-or-visible-to-other-users",
+      "title": "Rewrite the SearchPage so that both the photo search tab and video search tab are powered by real external API calls driven by the user's actual query text. For photo search: call the Unsplash Source URL pattern (https://source.unsplash.com/400x300/?{encodeURIComponent(query)},{index}) to construct a grid of 12 query-relevant images; add Picsum (https://picsum.photos/seed/{query}-{index}/400/300) as an automatic fallback per image if the Unsplash URL fails to load. For video search: call the Pexels Videos API free tier (https://api.pexels.com/videos/search?query={encodeURIComponent(query)}&per_page=9) using an API key from an environment variable or a clearly marked placeholder; display results as inline playable <video> elements with poster thumbnails; fall back to a curated set of direct public-domain MP4 URLs from Mixkit or Coverr if the API call fails or returns no results. All results must be query-relevant. Remove any random, hash-based, or hardcoded placeholder result logic. Results must remain private (not saved to profile or visible to other users).",
+      "reqIds": [
+        "REQ-39"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-the-dedicated-browserpage-browser-tab-from-the-main-navigation-and-from-the-router-entirely-the-in-app-browser-iframe-experience-is-not-wanted-ensure-the-main-navigation-only-contains-the-existing-core-tabs-home-contacts-chat-profile-create-search-settings-clean-up-any-routes-nav-entries-or-imports-referencing-browserpage",
+      "title": "Remove the dedicated BrowserPage / 'Browser' tab from the main navigation and from the router entirely. The in-app browser iframe experience is not wanted. Ensure the main navigation only contains the existing core tabs (Home, Contacts, Chat, Profile, Create, Search, Settings). Clean up any routes, nav entries, or imports referencing BrowserPage.",
+      "reqIds": [
+        "REQ-40"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rewrite-the-searchpage-to-deliver-real-broad-internet-search-results-for-both-photo-and-video-tabs-for-photo-search-use-the-unsplash-source-url-pattern-https-source-unsplash-com-400x300-encodeuricomponent-query-index-as-the-primary-source-for-a-grid-of-12-images-with-picsum-https-picsum-photos-seed-query-index-400-300-as-an-automatic-per-image-fallback-for-video-search-call-the-pexels-videos-api-free-tier-endpoint-https-api-pexels-com-videos-search-query-encodeuricomponent-query-per-page-9-orientation-landscape-using-the-api-key-stored-in-a-clearly-marked-placeholder-constant-pexels-api-key-display-each-result-as-an-inline-playable-video-element-with-a-poster-thumbnail-if-the-pexels-api-call-fails-or-returns-zero-results-fall-back-to-a-curated-pool-of-at-least-40-keyword-mapped-direct-mp4-urls-from-mixkit-coverr-or-pixabay-covering-diverse-categories-nature-sports-travel-animals-food-technology-music-cities-space-etc-all-results-must-visually-correspond-to-the-user-s-query-remove-all-random-hash-based-or-hardcoded-placeholder-logic-results-must-remain-private-not-saved-to-the-user-s-profile-or-visible-to-other-users",
+      "title": "Rewrite the SearchPage to deliver real, broad internet search results for both photo and video tabs. For photo search: use the Unsplash Source URL pattern (https://source.unsplash.com/400x300/?{encodeURIComponent(query)},{index}) as the primary source for a grid of 12 images, with Picsum (https://picsum.photos/seed/{query}-{index}/400/300) as an automatic per-image fallback. For video search: call the Pexels Videos API free tier endpoint (https://api.pexels.com/videos/search?query={encodeURIComponent(query)}&per_page=9&orientation=landscape) using the API key stored in a clearly marked placeholder constant (PEXELS_API_KEY); display each result as an inline playable <video> element with a poster thumbnail; if the Pexels API call fails or returns zero results, fall back to a curated pool of at least 40 keyword-mapped direct MP4 URLs from Mixkit, Coverr, or Pixabay covering diverse categories (nature, sports, travel, animals, food, technology, music, cities, space, etc.). All results must visually correspond to the user's query. Remove all random, hash-based, or hardcoded placeholder logic. Results must remain private — not saved to the user's profile or visible to other users.",
+      "reqIds": [
+        "REQ-41"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-imagegenerator-component-so-that-it-reliably-produces-and-displays-a-real-ai-generated-image-for-every-prompt-use-the-pollinations-ai-image-generation-api-https-image-pollinations-ai-prompt-encodeuricomponent-prompt-seed-seed-width-800-height-600-nologo-true-as-the-sole-source-generate-a-unique-random-seed-on-each-generation-attempt-on-image-load-error-broken-src-network-error-or-http-failure-automatically-retry-up-to-3-times-using-different-seed-values-seed-1-seed-2-seed-3-before-displaying-a-clear-user-facing-error-message-show-a-visible-loading-spinner-while-the-image-is-being-fetched-the-displayed-image-must-be-the-actual-pollinations-ai-result-for-the-user-s-prompt-no-keyword-mapping-hash-based-selection-or-random-placeholder-logic-save-to-profile-and-download-actions-must-remain-functional-using-the-final-resolved-image-url",
+      "title": "Fix the ImageGenerator component so that it reliably produces and displays a real AI-generated image for every prompt. Use the Pollinations AI image generation API (https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?seed={seed}&width=800&height=600&nologo=true) as the sole source. Generate a unique random seed on each generation attempt. On image load error (broken src, network error, or HTTP failure), automatically retry up to 3 times using different seed values (seed+1, seed+2, seed+3) before displaying a clear user-facing error message. Show a visible loading spinner while the image is being fetched. The displayed image must be the actual Pollinations AI result for the user's prompt — no keyword mapping, hash-based selection, or random placeholder logic. Save-to-profile and download actions must remain functional using the final resolved image URL.",
+      "reqIds": [
+        "REQ-42"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-videogenerator-component-so-that-it-reliably-produces-and-displays-a-real-ai-generated-or-api-matched-video-for-every-prompt-primary-approach-call-the-pollinations-ai-video-endpoint-https-video-pollinations-ai-prompt-encodeuricomponent-prompt-and-display-the-result-as-an-inline-video-element-with-controls-and-autoplay-muted-if-that-endpoint-returns-an-error-or-no-playable-content-within-a-reasonable-timeout-10-seconds-fall-back-to-the-pexels-videos-api-free-tier-https-api-pexels-com-videos-search-query-encodeuricomponent-prompt-per-page-5-orientation-landscape-using-an-api-key-stored-in-a-clearly-marked-placeholder-constant-pexels-api-key-display-the-first-valid-sd-quality-direct-mp4-url-as-an-inline-video-element-show-a-loading-spinner-during-all-api-calls-on-failure-of-both-sources-display-a-clear-user-facing-error-message-with-a-retry-button-remove-all-local-keyword-to-video-mapping-logic-save-and-share-actions-must-remain-available-after-a-video-is-loaded",
+      "title": "Fix the VideoGenerator component so that it reliably produces and displays a real AI-generated or API-matched video for every prompt. Primary approach: call the Pollinations AI video endpoint (https://video.pollinations.ai/prompt/{encodeURIComponent(prompt)}) and display the result as an inline <video> element with controls and autoplay muted. If that endpoint returns an error or no playable content within a reasonable timeout (10 seconds), fall back to the Pexels Videos API free tier (https://api.pexels.com/videos/search?query={encodeURIComponent(prompt)}&per_page=5&orientation=landscape) using an API key stored in a clearly marked placeholder constant (PEXELS_API_KEY); display the first valid SD-quality direct MP4 URL as an inline <video> element. Show a loading spinner during all API calls. On failure of both sources, display a clear user-facing error message with a Retry button. Remove all local keyword-to-video mapping logic. Save and Share actions must remain available after a video is loaded.",
+      "reqIds": [
+        "REQ-43"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -356,6 +455,30 @@
     {
       "id": "AR-21",
       "summary": "Fix video and image display layout — content shows a question mark and is not visible; switch away from YouTube for videos (use two alternative video platforms/sources); use multiple image platforms for photo display and search",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-22",
+      "summary": "Fix search functionality: search must return results relevant to the user's query, not random photos/videos. Video search should support a wide variety of video categories/topics.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Switch AI image and video generators to use a real AI platform/API that actually generates content from prompts instead of returning keyword-mapped placeholder results",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-25",
+      "summary": "Remove standalone in-app browser; instead connect video search and photo search directly to a browser-backed search so users can search anything freely",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-26",
+      "summary": "Fix AI image and video generators — they are showing errors; switch to different working generator APIs/services that actually produce results",
       "reqIds": [],
       "status": "pending"
     }

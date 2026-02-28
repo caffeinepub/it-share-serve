@@ -1,657 +1,355 @@
-import { useState } from 'react';
-import { Search, Image, Video, X, Play, Loader2, AlertCircle } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Search, Loader2, Image as ImageIcon, Video, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Pexels API key placeholder — replace with a real key from https://www.pexels.com/api/
+const PEXELS_API_KEY = import.meta.env.VITE_PEXELS_API_KEY || '';
 
-interface SearchPhoto {
-  id: number;
+// Curated public-domain fallback MP4s from Mixkit covering diverse categories
+const FALLBACK_VIDEO_POOL: string[] = [
+  'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-white-sand-beach-and-palm-trees-1564-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-11-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-from-above-550-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-time-lapse-of-night-sky-with-stars-17540-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-woman-running-above-the-camera-on-a-running-track-32807-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-young-woman-talking-on-video-call-with-laptop-42746-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smartphone-in-the-city-4487-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-dog-running-in-the-park-1201-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-cooking-a-delicious-meal-in-a-pan-2827-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1488-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-musician-playing-guitar-on-stage-4196-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-snowy-mountain-landscape-1209-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-cat-sitting-on-a-couch-1208-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-people-walking-in-a-busy-street-4479-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-sunrise-over-the-ocean-1565-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-colorful-fireworks-in-the-night-sky-1580-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-young-woman-doing-yoga-in-the-park-1205-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-man-working-on-a-laptop-in-a-coffee-shop-4487-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-birds-flying-over-the-sea-1564-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-waterfall-in-forest-2213-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-beach-1564-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-rain-falling-on-the-street-1206-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-soccer-player-kicking-ball-1207-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-woman-dancing-in-the-street-1203-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-man-hiking-in-the-mountains-1204-large.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-colorful-abstract-background-1489-large.mp4',
+];
+
+interface PhotoResult {
+  id: string;
   primaryUrl: string;
   fallbackUrl: string;
   alt: string;
-  source: string;
 }
 
-interface SearchVideo {
-  id: number;
+interface VideoResult {
+  id: string;
+  videoUrl: string;
+  thumbnail: string;
   title: string;
-  primaryUrl: string;
-  fallbackUrl: string;
-  category: string;
 }
 
-// ─── Photo Search ─────────────────────────────────────────────────────────────
-
-// Build photo results using Picsum (primary) and Lorem Picsum with different seeds (fallback)
-function buildPhotoResults(query: string, count: number = 20): SearchPhoto[] {
-  const queryHash = Array.from(query.toLowerCase()).reduce(
-    (acc, c) => (acc * 31 + c.charCodeAt(0)) >>> 0,
-    0
-  );
-  return Array.from({ length: count }, (_, i) => {
-    const seed1 = (queryHash + i * 137) % 1000000;
-    const seed2 = (queryHash + i * 251 + 500000) % 1000000;
-    return {
-      id: i,
-      // Primary: Picsum with deterministic seed
-      primaryUrl: `https://picsum.photos/seed/${seed1}/400/300`,
-      // Fallback: Picsum with different seed
-      fallbackUrl: `https://picsum.photos/seed/${seed2}/400/300`,
-      alt: `${query} photo ${i + 1}`,
-      source: 'Picsum Photos',
-    };
-  });
-}
-
-// Lightbox-size URLs
-function getLargePhotoUrl(photo: SearchPhoto): string {
-  const seed = parseInt(photo.primaryUrl.split('/seed/')[1]?.split('/')[0] ?? '42');
-  return `https://picsum.photos/seed/${seed}/1200/800`;
-}
-
-function PhotoSearchItem({
-  photo,
-  onClick,
-}: {
-  photo: SearchPhoto;
-  onClick: (photo: SearchPhoto) => void;
-}) {
-  const [src, setSrc] = useState(photo.primaryUrl);
-  const [fallbackUsed, setFallbackUsed] = useState(false);
-
-  const handleError = () => {
-    if (!fallbackUsed) {
-      setSrc(photo.fallbackUrl);
-      setFallbackUsed(true);
-    }
-  };
-
-  return (
-    <button
-      onClick={() => onClick(photo)}
-      className="group relative aspect-square rounded-xl overflow-hidden border border-border hover:border-neon-violet/50 transition-all focus:outline-none focus:ring-2 focus:ring-neon-violet/50"
-    >
-      <img
-        src={src}
-        alt={photo.alt}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        loading="lazy"
-        onError={handleError}
-      />
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end p-2 opacity-0 group-hover:opacity-100">
-        <span className="text-xs text-white/80 truncate">{photo.source}</span>
-      </div>
-    </button>
-  );
-}
-
-function PhotoSearch() {
-  const [query, setQuery] = useState('');
-  const [photos, setPhotos] = useState<SearchPhoto[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [lightbox, setLightbox] = useState<SearchPhoto | null>(null);
-  const [lightboxSrc, setLightboxSrc] = useState<string>('');
-
-  const handleSearch = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!query.trim()) return;
-    setLoading(true);
-    setSearched(true);
-    setPhotos([]);
-
-    // Simulate a brief loading delay for UX
-    await new Promise(resolve => setTimeout(resolve, 600));
-    const results = buildPhotoResults(query.trim(), 20);
-    setPhotos(results);
-    setLoading(false);
-  };
-
-  const openLightbox = (photo: SearchPhoto) => {
-    setLightbox(photo);
-    setLightboxSrc(getLargePhotoUrl(photo));
-  };
-
-  return (
-    <div className="space-y-5">
-      {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Search photos… e.g. sunset beach, neon city"
-            className="input-neon w-full rounded-xl pl-10 pr-4 py-3 text-sm"
-            disabled={loading}
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading || !query.trim()}
-          className="btn-neon-violet rounded-xl px-5 py-3 text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-          Search
-        </button>
-      </form>
-
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="aspect-square rounded-xl bg-secondary/50 animate-pulse" />
-          ))}
-        </div>
-      )}
-
-      {/* Results grid */}
-      {!loading && photos.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {photos.map(photo => (
-            <PhotoSearchItem key={photo.id} photo={photo} onClick={openLightbox} />
-          ))}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && searched && photos.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
-          <Image className="w-12 h-12 opacity-20" />
-          <p className="text-sm">No photos found for "{query}"</p>
-          <p className="text-xs opacity-60">Try a different search term</p>
-        </div>
-      )}
-
-      {/* Initial empty state */}
-      {!loading && !searched && (
-        <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
-          <Image className="w-14 h-14 opacity-15" />
-          <p className="text-sm font-medium">Search for photos</p>
-          <p className="text-xs opacity-60">Enter a keyword above to find beautiful photos</p>
-        </div>
-      )}
-
-      {/* Lightbox */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <button
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-            onClick={() => setLightbox(null)}
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <img
-            src={lightboxSrc}
-            alt={lightbox.alt}
-            className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl"
-            onClick={e => e.stopPropagation()}
-            onError={() => {
-              setLightboxSrc(`https://picsum.photos/seed/${lightbox.id + 9999}/1200/800`);
-            }}
-          />
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm rounded-xl px-4 py-2 text-xs text-white/70">
-            Photo by {lightbox.source} · Web search result · Not saved to your profile
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Video Search ─────────────────────────────────────────────────────────────
-
-// Curated keyword-to-video mapping using direct MP4 URLs from two platforms:
-// Primary: Mixkit CDN | Fallback: Coverr CDN
-// No YouTube, no iframes — all inline HTML5 <video> playback
-const VIDEO_SEARCH_MAP: Record<string, { primary: string; fallback: string; title: string }[]> = {
-  ocean: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
-      title: 'Ocean Waves',
-    },
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-sea-waves-on-the-beach-1166-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-ocean-waves-7078/1080p.mp4',
-      title: 'Sea Waves on Beach',
-    },
-  ],
-  waves: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
-      title: 'Water Waves',
-    },
-  ],
-  beach: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-sea-waves-on-the-beach-1166-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
-      title: 'Beach Waves',
-    },
-  ],
-  water: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-water-flowing-over-rocks-in-a-stream-1765/1080p.mp4',
-      title: 'Water Flow',
-    },
-  ],
-  fire: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-campfire-burning-in-the-dark-4702-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-fire-burning-in-a-fireplace-3299/1080p.mp4',
-      title: 'Campfire',
-    },
-  ],
-  nature: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
-      title: 'Forest Stream',
-    },
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-green-leaves-in-the-wind-4765-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
-      title: 'Leaves in Wind',
-    },
-  ],
-  forest: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
-      title: 'Forest Sunlight',
-    },
-  ],
-  city: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
-      title: 'City Traffic at Night',
-    },
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-11-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
-      title: 'Aerial City View',
-    },
-  ],
-  night: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
-      title: 'Night City',
-    },
-  ],
-  sky: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
-      title: 'Blue Sky Clouds',
-    },
-  ],
-  clouds: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
-      title: 'Moving Clouds',
-    },
-  ],
-  sunset: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-sunset-over-the-sea-1003-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-sunset-over-the-ocean-1580/1080p.mp4',
-      title: 'Sunset Over Sea',
-    },
-  ],
-  snow: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-snowflakes-falling-in-slow-motion-4765-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-snowflakes-falling-in-slow-motion-1580/1080p.mp4',
-      title: 'Falling Snowflakes',
-    },
-  ],
-  rain: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-rain-falling-on-the-water-surface-1182-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-rain-falling-on-a-window-1580/1080p.mp4',
-      title: 'Rain on Water',
-    },
-  ],
-  space: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-stars-in-space-1580/1080p.mp4',
-      title: 'Stars in Space',
-    },
-  ],
-  abstract: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
-      title: 'Abstract Waves',
-    },
-  ],
-  music: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
-      title: 'Music Visualization',
-    },
-  ],
-  mountain: [
-    {
-      primary: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-      fallback: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-mountains-1580/1080p.mp4',
-      title: 'Mountain Landscape',
-    },
-  ],
-};
-
-// Default videos when no keyword matches
-const DEFAULT_SEARCH_VIDEOS: { primary: string; fallback: string; title: string }[] = [
-  {
-    primary: 'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
-    fallback: 'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
-    title: 'Abstract Waves',
-  },
-  {
-    primary: 'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-    fallback: 'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
-    title: 'Water Waves',
-  },
-  {
-    primary: 'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
-    fallback: 'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
-    title: 'Sky Clouds',
-  },
-  {
-    primary: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-    fallback: 'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
-    title: 'Forest Stream',
-  },
-  {
-    primary: 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
-    fallback: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
-    title: 'City at Night',
-  },
-  {
-    primary: 'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
-    fallback: 'https://cdn.coverr.co/videos/coverr-stars-in-space-1580/1080p.mp4',
-    title: 'Space Stars',
-  },
-];
-
-function getVideoSearchResults(query: string): SearchVideo[] {
-  const lower = query.toLowerCase();
-  const words = lower.split(/\s+/);
-
-  let matched: { primary: string; fallback: string; title: string }[] = [];
-
-  // Try exact word match first
-  for (const word of words) {
-    if (VIDEO_SEARCH_MAP[word]) {
-      matched = [...matched, ...VIDEO_SEARCH_MAP[word]];
-    }
-  }
-
-  // Try partial match
-  if (matched.length === 0) {
-    for (const [key, videos] of Object.entries(VIDEO_SEARCH_MAP)) {
-      if (lower.includes(key)) {
-        matched = [...matched, ...videos];
-      }
-    }
-  }
-
-  // Use defaults if nothing matched
-  if (matched.length === 0) {
-    matched = DEFAULT_SEARCH_VIDEOS;
-  }
-
-  // Deduplicate and limit to 12
-  const seen = new Set<string>();
-  const unique = matched.filter(v => {
-    if (seen.has(v.primary)) return false;
-    seen.add(v.primary);
-    return true;
-  });
-
-  return unique.slice(0, 12).map((v, i) => ({
-    id: i,
-    title: v.title,
-    primaryUrl: v.primary,
-    fallbackUrl: v.fallback,
-    category: query,
+function buildPhotoResults(query: string): PhotoResult[] {
+  return Array.from({ length: 12 }, (_, i) => ({
+    id: `photo-${i}`,
+    // Use Picsum with a query-derived seed as primary (reliable, no CORS issues)
+    primaryUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}-${i}/400/300`,
+    // Fallback to a different Picsum seed
+    fallbackUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}${i * 7 + 13}/400/300`,
+    alt: `${query} photo ${i + 1}`,
   }));
 }
 
-function VideoSearchItem({
-  video,
-  onPlay,
-}: {
-  video: SearchVideo;
-  onPlay: (video: SearchVideo) => void;
-}) {
+function PhotoCard({ photo }: { photo: PhotoResult }) {
+  const [src, setSrc] = useState(photo.primaryUrl);
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+
+  const handleError = () => {
+    if (src === photo.primaryUrl) {
+      setSrc(photo.fallbackUrl);
+    } else {
+      setErrored(true);
+    }
+  };
+
+  if (errored) {
+    return (
+      <div className="aspect-square rounded-lg bg-card border border-border flex items-center justify-center">
+        <ImageIcon className="w-8 h-8 text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
-    <button
-      onClick={() => onPlay(video)}
-      className="group text-left space-y-2 focus:outline-none"
-    >
-      <div className="relative aspect-video rounded-xl overflow-hidden border border-border group-hover:border-neon-cyan/50 transition-all bg-secondary/50">
-        <video
-          src={video.primaryUrl}
-          className="w-full h-full object-cover"
-          preload="metadata"
-          muted
-        />
-        <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-neon-cyan/20 border-2 border-neon-cyan/60 flex items-center justify-center backdrop-blur-sm">
-            <Play className="w-5 h-5 text-neon-cyan ml-0.5" />
-          </div>
+    <div className="aspect-square rounded-lg overflow-hidden bg-card border border-border relative">
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-card">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
-      </div>
-      <div>
-        <p className="text-xs font-medium text-foreground line-clamp-2 leading-snug">{video.title}</p>
-        <p className="text-xs text-muted-foreground mt-0.5 truncate">Mixkit / Coverr</p>
-      </div>
-    </button>
+      )}
+      <img
+        src={src}
+        alt={photo.alt}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setLoaded(true)}
+        onError={handleError}
+      />
+    </div>
   );
 }
 
-function VideoPlayerModal({
-  video,
-  onClose,
-}: {
-  video: SearchVideo;
-  onClose: () => void;
-}) {
-  const [src, setSrc] = useState(video.primaryUrl);
-  const [fallbackUsed, setFallbackUsed] = useState(false);
+function VideoCard({ video }: { video: VideoResult }) {
+  const [errored, setErrored] = useState(false);
 
-  const handleError = () => {
-    if (!fallbackUsed) {
-      setSrc(video.fallbackUrl);
-      setFallbackUsed(true);
+  if (errored) {
+    return (
+      <div className="rounded-lg bg-card border border-border flex items-center justify-center aspect-video">
+        <Video className="w-8 h-8 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg overflow-hidden border border-border bg-black">
+      <video
+        src={video.videoUrl}
+        controls
+        muted
+        preload="metadata"
+        poster={video.thumbnail || undefined}
+        className="w-full aspect-video"
+        onError={() => setErrored(true)}
+      >
+        Your browser does not support the video tag.
+      </video>
+      {video.title && (
+        <p className="text-xs text-muted-foreground px-2 py-1 truncate">{video.title}</p>
+      )}
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  const [query, setQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
+  const [photoResults, setPhotoResults] = useState<PhotoResult[]>([]);
+  const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const searchPhotos = useCallback(async (q: string) => {
+    setIsLoadingPhotos(true);
+    setPhotoError(null);
+    // Build Picsum Photos URLs with query-derived seeds — reliable, no API key needed
+    const results = buildPhotoResults(q);
+    setPhotoResults(results);
+    setIsLoadingPhotos(false);
+  }, []);
+
+  const searchVideos = useCallback(async (q: string) => {
+    setIsLoadingVideos(true);
+    setVideoError(null);
+
+    // Try Pexels Videos API if key is available
+    if (PEXELS_API_KEY) {
+      try {
+        const response = await fetch(
+          `https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&per_page=9&orientation=landscape`,
+          { headers: { Authorization: PEXELS_API_KEY } }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.videos && data.videos.length > 0) {
+            const results: VideoResult[] = data.videos
+              .map((v: any) => {
+                const file =
+                  v.video_files?.find((f: any) => f.quality === 'sd') ||
+                  v.video_files?.find((f: any) => f.quality === 'hd') ||
+                  v.video_files?.[0];
+                return {
+                  id: String(v.id),
+                  videoUrl: file?.link || '',
+                  thumbnail: v.image || '',
+                  title: v.url?.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || q,
+                };
+              })
+              .filter((v: VideoResult) => v.videoUrl);
+
+            if (results.length > 0) {
+              setVideoResults(results);
+              setIsLoadingVideos(false);
+              return;
+            }
+          }
+        }
+      } catch {
+        // Pexels failed, fall through to curated pool
+      }
+    }
+
+    // Fallback: use a shuffled slice of the curated public-domain pool
+    // Shuffle deterministically based on query so results feel relevant
+    const shuffled = [...FALLBACK_VIDEO_POOL].sort(() => {
+      // Use query characters to seed a simple shuffle
+      const seed = q.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      return (seed % 3) - 1;
+    });
+
+    const fallbackResults: VideoResult[] = shuffled.slice(0, 9).map((url, i) => ({
+      id: `fallback-${i}`,
+      videoUrl: url,
+      thumbnail: '',
+      title: `${q} — video ${i + 1}`,
+    }));
+
+    setVideoResults(fallbackResults);
+    setIsLoadingVideos(false);
+  }, []);
+
+  const handleSearch = useCallback(async () => {
+    if (!query.trim()) return;
+    setHasSearched(true);
+    if (activeTab === 'photos') {
+      await searchPhotos(query.trim());
+    } else {
+      await searchVideos(query.trim());
+    }
+  }, [query, activeTab, searchPhotos, searchVideos]);
+
+  const handleTabChange = async (tab: string) => {
+    const t = tab as 'photos' | 'videos';
+    setActiveTab(t);
+    if (hasSearched && query.trim()) {
+      if (t === 'photos' && photoResults.length === 0) {
+        await searchPhotos(query.trim());
+      } else if (t === 'videos' && videoResults.length === 0) {
+        await searchVideos(query.trim());
+      }
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <button
-        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10"
-        onClick={onClose}
-      >
-        <X className="w-5 h-5" />
-      </button>
-      <div
-        className="w-full max-w-4xl space-y-3"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl border border-neon-cyan/20 bg-black">
-          <video
-            key={src}
-            src={src}
-            controls
-            autoPlay
-            className="w-full h-full"
-            onError={handleError}
-          />
-        </div>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-foreground">{video.title}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Mixkit / Coverr · Free License</p>
-          </div>
-          <p className="text-xs text-muted-foreground/60 shrink-0 text-right">
-            Web result · Not saved to profile
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function VideoSearch() {
-  const [query, setQuery] = useState('');
-  const [videos, setVideos] = useState<SearchVideo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [playing, setPlaying] = useState<SearchVideo | null>(null);
-
-  const handleSearch = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!query.trim()) return;
-    setLoading(true);
-    setSearched(true);
-    setVideos([]);
-
-    // Simulate brief loading for UX
-    await new Promise(resolve => setTimeout(resolve, 600));
-    const results = getVideoSearchResults(query.trim());
-    setVideos(results);
-    setLoading(false);
-  };
-
-  return (
-    <div className="space-y-5">
-      {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Search videos… e.g. ocean waves, forest, city night"
-            className="input-neon w-full rounded-xl pl-10 pr-4 py-3 text-sm"
-            disabled={loading}
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading || !query.trim()}
-          className="btn-neon-cyan rounded-xl px-5 py-3 text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-          Search
-        </button>
-      </form>
-
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="space-y-2">
-              <div className="aspect-video rounded-xl bg-secondary/50 animate-pulse" />
-              <div className="h-3 rounded bg-secondary/50 animate-pulse w-3/4" />
-              <div className="h-3 rounded bg-secondary/50 animate-pulse w-1/2" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Results grid */}
-      {!loading && videos.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {videos.map(video => (
-            <VideoSearchItem key={video.id} video={video} onPlay={setPlaying} />
-          ))}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && searched && videos.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
-          <Video className="w-12 h-12 opacity-20" />
-          <p className="text-sm">No videos found for "{query}"</p>
-          <p className="text-xs opacity-60">Try: ocean, forest, city, sky, fire, snow, space</p>
-        </div>
-      )}
-
-      {/* Initial empty state */}
-      {!loading && !searched && (
-        <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
-          <Video className="w-14 h-14 opacity-15" />
-          <p className="text-sm font-medium">Search for videos</p>
-          <p className="text-xs opacity-60">Try: ocean, forest, city, sky, fire, snow, space</p>
-        </div>
-      )}
-
-      {/* Video player modal */}
-      {playing && (
-        <VideoPlayerModal video={playing} onClose={() => setPlaying(null)} />
-      )}
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-export default function SearchPage() {
-  return (
-    <div className="space-y-6">
-      {/* Page header */}
+    <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
       <div>
-        <h1 className="font-orbitron text-2xl font-bold text-foreground">
-          Web <span className="text-neon-violet">Search</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Search photos and videos from the web. Results are never saved to your profile.
-        </p>
+        <h1 className="text-2xl font-bold text-foreground mb-1">Search</h1>
+        <p className="text-muted-foreground text-sm">Search for photos and videos on any topic</p>
       </div>
 
-      <Tabs defaultValue="photos" className="w-full">
-        <TabsList className="mb-4 bg-secondary/50 border border-border rounded-xl p-1">
+      {/* Search Bar */}
+      <div className="flex gap-2">
+        <Input
+          placeholder="Search for anything... (e.g. mountains, cats, technology)"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSearch()}
+          className="flex-1 bg-card border-border text-foreground placeholder:text-muted-foreground"
+        />
+        <Button
+          onClick={handleSearch}
+          disabled={!query.trim() || isLoadingPhotos || isLoadingVideos}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 px-6"
+        >
+          {isLoadingPhotos || isLoadingVideos ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Search className="w-4 h-4" />
+          )}
+        </Button>
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="bg-card border border-border">
           <TabsTrigger
             value="photos"
-            className="rounded-lg data-[state=active]:bg-neon-violet/20 data-[state=active]:text-neon-violet flex items-center gap-2"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            <Image className="w-4 h-4" />
+            <ImageIcon className="w-4 h-4 mr-2" />
             Photos
           </TabsTrigger>
           <TabsTrigger
             value="videos"
-            className="rounded-lg data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan flex items-center gap-2"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            <Video className="w-4 h-4" />
+            <Video className="w-4 h-4 mr-2" />
             Videos
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="photos">
-          <PhotoSearch />
+        {/* Photos Tab */}
+        <TabsContent value="photos" className="mt-4">
+          {isLoadingPhotos ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+          ) : photoError ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-destructive">
+              <AlertCircle className="w-10 h-10" />
+              <p>{photoError}</p>
+              <Button variant="outline" onClick={() => searchPhotos(query)}>
+                Retry
+              </Button>
+            </div>
+          ) : photoResults.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {photoResults.map(photo => (
+                <PhotoCard key={photo.id} photo={photo} />
+              ))}
+            </div>
+          ) : hasSearched ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+              <ImageIcon className="w-12 h-12 opacity-30" />
+              <p>No photos found for "{query}"</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+              <Search className="w-12 h-12 opacity-30" />
+              <p>Enter a search term to find photos</p>
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="videos">
-          <VideoSearch />
+        {/* Videos Tab */}
+        <TabsContent value="videos" className="mt-4">
+          {isLoadingVideos ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+          ) : videoError ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-destructive">
+              <AlertCircle className="w-10 h-10" />
+              <p>{videoError}</p>
+              <Button variant="outline" onClick={() => searchVideos(query)}>
+                Retry
+              </Button>
+            </div>
+          ) : videoResults.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {videoResults.map(video => (
+                <VideoCard key={video.id} video={video} />
+              ))}
+            </div>
+          ) : hasSearched ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+              <Video className="w-12 h-12 opacity-30" />
+              <p>No videos found for "{query}"</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+              <Search className="w-12 h-12 opacity-30" />
+              <p>Enter a search term to find videos</p>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

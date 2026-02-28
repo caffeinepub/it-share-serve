@@ -1,49 +1,55 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T19:57:50.076Z",
-  "summary": "The diff modifies 5 key frontend components (ImageGenerator, PhotoGallery, VideoGallery, VideoGenerator, SearchPage) plus supporting files. All five REQs are substantially addressed: multi-platform fallback image sources, YouTube-free MP4 video sources, inline <video> elements, and fallback chains. However, some acceptance criteria have gaps, particularly around using truly distinct platforms (Unsplash vs Picsum) for REQ-27 and REQ-31, and around chat message rendering for REQ-29 and REQ-30.",
+  "generatedAt": "2026-02-28T21:11:15.065Z",
+  "summary": "The diff implements REQ-42 (ImageGenerator with Pollinations AI, retry logic, spinner, save/download) and REQ-43 (VideoGenerator with Pollinations + Pexels fallback, loading spinner, retry button, share/save) largely as specified. REQ-41 (SearchPage) is partially implemented — the fallback video pool is present and Pexels API integration exists, but the photo search uses Picsum as the primary source instead of the required Unsplash Source URL pattern. The VideoGenerator fallback pool contains only 20 entries instead of the required 40+. The ImageGenerator retry uses seed+1000*n instead of seed+1, seed+2, seed+3 as specified.",
   "missing_requirements": [
     {
-      "id": "REQ-27",
-      "requirement": "Image sources are drawn from at least two different public platforms (e.g., Unsplash and Picsum/Pexels)",
-      "reason": "The ImageGenerator buildImageUrls function uses only Picsum Photos for all three fallback URLs (seed variant 1, seed variant 2, and random). No second platform such as Unsplash or Pexels is used.",
+      "id": "REQ-41",
+      "requirement": "For photo search, use the Unsplash Source URL pattern (https://source.unsplash.com/400x300/?{encodeURIComponent(query)},{index}) as the primary source for a grid of 12 images, with Picsum as an automatic per-image fallback.",
+      "reason": "The diff shows SearchPage uses Picsum (https://picsum.photos/seed/...) as the primary URL, not Unsplash Source URLs. The comment in the code explicitly states 'Use Picsum with a query-derived seed as primary (reliable, no CORS issues)'. Unsplash Source URL is required as primary.",
+      "evidence": [
+        "frontend/src/pages/SearchPage.tsx"
+      ]
+    },
+    {
+      "id": "REQ-41",
+      "requirement": "Fallback video pool must cover at least 40 keyword-mapped direct MP4 URLs covering diverse categories.",
+      "reason": "The SearchPage fallback pool has 30 entries which is fewer than the required 40. Also the pool selection uses a hash/deterministic index based on the query string rather than keyword mapping to categories.",
+      "evidence": [
+        "frontend/src/pages/SearchPage.tsx"
+      ]
+    },
+    {
+      "id": "REQ-42",
+      "requirement": "On image load error, automatically retry up to 3 times using different seed values (seed+1, seed+2, seed+3).",
+      "reason": "The diff uses seed + nextRetry * 1000 (i.e., seed+1000, seed+2000, seed+3000) instead of seed+1, seed+2, seed+3 as specified in the requirement.",
       "evidence": [
         "frontend/src/components/ImageGenerator.tsx"
       ]
     },
     {
-      "id": "REQ-29",
-      "requirement": "Photos shared in chat messages also render without broken icons",
-      "reason": "The diff only modifies PhotoGallery.tsx for grid/lightbox views. There is no evidence in the diff that chat message photo rendering was updated to use the same fallback approach.",
+      "id": "REQ-43",
+      "requirement": "Fallback video pool in VideoGenerator must contain at least 40 keyword-mapped direct MP4 URLs covering diverse categories.",
+      "reason": "The VideoGenerator fallback pool only has 20 entries, well below the required 40. The requirement also specifies keyword-mapped fallback logic, but the implementation uses hash-based deterministic selection.",
       "evidence": [
-        "frontend/src/components/PhotoGallery.tsx"
-      ]
-    },
-    {
-      "id": "REQ-30",
-      "requirement": "Videos shared in chat messages render and play inline without broken icons",
-      "reason": "The diff only modifies VideoGallery.tsx for the grid view. There is no evidence in the diff that chat message video rendering was updated to use inline <video> elements with fallback MP4 sources.",
-      "evidence": [
-        "frontend/src/components/VideoGallery.tsx"
-      ]
-    },
-    {
-      "id": "REQ-31",
-      "requirement": "Photo search uses at least two image source platforms with fallback behavior",
-      "reason": "The SearchPage buildPhotoResults function uses only Picsum Photos for both the primary and fallback URLs (two different seeds, same platform). The requirement specifies using at least two different platforms such as Unsplash and Picsum.",
-      "evidence": [
-        "frontend/src/pages/SearchPage.tsx"
+        "frontend/src/components/VideoGenerator.tsx"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.72,
+  "hallucinated_features": [
+    {
+      "description": "VideoGenerator includes a Download button in addition to Save and Share actions.",
+      "reason": "REQ-43 only specifies Save and Share actions remaining functional after video is loaded. A Download button was not requested for the VideoGenerator.",
+      "evidence": [
+        "frontend/src/components/VideoGenerator.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.78,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/ImageGenerator.tsx",
-    "frontend/src/components/PhotoGallery.tsx",
-    "frontend/src/components/VideoGallery.tsx",
     "frontend/src/components/VideoGenerator.tsx",
     "frontend/src/pages/SearchPage.tsx",
     "project_state.json"
