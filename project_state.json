@@ -1,0 +1,154 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "ShareServe is an instant messaging app with photo and video sharing, AI image and video generation, account creation with custom username/profile number, contacts system, dark theme UI, text effects, and visual polish. Messaging is between in-app accounts only. AI generation follows standard content policies.",
+  "architectural_notes": [
+    "Messaging is in-app only; no external SMS or phone network integration",
+    "AI generation features must follow standard content policies — no unregulated generation"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- ShareServe app logo — bold neon-outlined 'S' monogram with a glowing electric violet and cyan gradient on a near-black background, modern futuristic style (shareserve-logo.dim_256x256.png)\n- Dark abstract background texture with faint grid lines and subtle neon glow particles for use as a full-screen app background (app-bg.dim_1920x1080.png)\n- Video facts card placeholder background — blurred cosmic/space scene with deep blues and purples (video-facts-bg.dim_800x450.png)",
+  "existing_features": [
+    {
+      "id": "feature-implement-in-app-messaging-between-registered-users-users-can-send-and-receive-text-messages-in-one-on-one-chat-threads-messages-are-stored-in-the-backend-and-retrieved-per-conversation-messaging-only-works-between-accounts-within-the-app-no-external-sms-or-phone-network-integration",
+      "title": "Implement in-app messaging between registered users: users can send and receive text messages in one-on-one chat threads. Messages are stored in the backend and retrieved per conversation. Messaging only works between accounts within the app — no external SMS or phone network integration.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-photo-sharing-in-chats-and-on-a-user-profile-feed-users-can-upload-photos-stored-as-base64-or-asset-url-in-the-backend-share-them-in-messages-and-view-shared-photos-in-a-gallery-style-feed",
+      "title": "Implement photo sharing in chats and on a user profile feed: users can upload photos (stored as base64 or asset URL in the backend), share them in messages, and view shared photos in a gallery-style feed.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-video-sharing-in-chats-and-on-a-user-profile-feed-users-can-upload-short-videos-share-them-in-messages-and-play-them-inline-within-the-chat-or-feed-view",
+      "title": "Implement video sharing in chats and on a user profile feed: users can upload short videos, share them in messages, and play them inline within the chat or feed view.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-ai-image-generation-feature-accessible-from-a-dedicated-create-tab-users-enter-a-text-prompt-and-receive-a-generated-image-they-can-save-to-their-profile-or-share-in-a-chat-generation-follows-standard-content-policies",
+      "title": "Add an AI image generation feature accessible from a dedicated 'Create' tab: users enter a text prompt and receive a generated image they can save to their profile or share in a chat. Generation follows standard content policies.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-ai-video-generation-feature-on-the-same-create-tab-users-enter-a-text-prompt-or-description-and-receive-a-generated-short-video-clip-they-can-save-or-share-generation-follows-standard-content-policies",
+      "title": "Add an AI video generation feature on the same 'Create' tab: users enter a text prompt or description and receive a generated short video clip they can save or share. Generation follows standard content policies.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-the-full-frontend-ui-with-a-dark-theme-deep-dark-backgrounds-near-black-vibrant-neon-accent-colors-e-g-electric-violet-cyan-hot-pink-glowing-ui-elements-animated-text-effects-shimmer-glow-typewriter-gradient-highlights-and-a-sleek-futuristic-layout-apply-the-theme-consistently-across-all-screens",
+      "title": "Build the full frontend UI with a dark theme: deep dark backgrounds (near-black), vibrant neon accent colors (e.g., electric violet, cyan, hot pink), glowing UI elements, animated text effects (shimmer, glow, typewriter), gradient highlights, and a sleek futuristic layout. Apply the theme consistently across all screens.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-video-facts-section-or-widget-on-the-home-discovery-screen-display-a-rotating-carousel-of-short-informational-video-cards-covering-interesting-topics-space-science-history-etc-videos-are-static-placeholder-clips-with-overlay-text-facts",
+      "title": "Add a 'Video Facts' section or widget on the home/discovery screen: display a rotating carousel of short informational video cards covering interesting topics (space, science, history, etc.). Videos are static placeholder clips with overlay text facts.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-user-profile-screen-showing-profile-number-avatar-display-name-username-bio-post-photo-video-gallery-and-a-button-to-edit-profile-details",
+      "title": "Build a user profile screen showing: profile number, avatar, display name, username, bio, post/photo/video gallery, and a button to edit profile details.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Account creation with custom username and profile number",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Dark theme UI with cool visual polish and text effects",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "In-app messaging between user accounts",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Photo sharing between users",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Video sharing between users",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "AI image generation feature (standard content policies)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "AI video generation feature (standard content policies)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Contacts system for managing user connections",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Video facts and informational content display",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Implement backend user account system: users can register with a unique username, auto-generated profile number (e.g., #00123), display name, avatar URL, and bio. Store profiles in stable backend state. Support login via Internet Identity.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Implement a contacts system: users can search for other users by username or profile number, send contact requests, accept or decline requests, and view their contacts list.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "ShareServe",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

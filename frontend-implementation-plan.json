@@ -1,0 +1,286 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "ShareServe Frontend — Messaging, Media Sharing, AI Generation & Dark Theme UI",
+  "requirements": [
+    {
+      "id": "REQ-3",
+      "summary": "Build messaging UI for one-on-one chat threads between registered users",
+      "acceptanceCriteria": [
+        "A user can open a chat with a contact and send text messages.",
+        "Messages are stored and retrievable from the backend.",
+        "No external phone or SMS integration exists."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/ChatPage.tsx",
+          "operation": "create",
+          "description": "Create a chat page that displays a conversation with a selected contact. Shows message history using getConversation backend method. Includes a text input and send button that calls sendMessage. Applies dark theme styling with neon accents."
+        },
+        {
+          "path": "frontend/src/components/MessageList.tsx",
+          "operation": "create",
+          "description": "Create a component that renders a list of messages in a chat thread. Displays sender info, message content, and timestamp. Styles messages from the current user differently (right-aligned) than messages from the contact (left-aligned). Uses dark theme with glowing message bubbles."
+        },
+        {
+          "path": "frontend/src/components/MessageInput.tsx",
+          "operation": "create",
+          "description": "Create a message input component with a text field and send button. Calls sendMessage backend method when user submits. Includes validation and loading state. Styled with neon glow effects on focus."
+        },
+        {
+          "path": "frontend/src/pages/ContactsPage.tsx",
+          "operation": "create",
+          "description": "Create a contacts page that displays the user's contacts list using getCallerContacts. Each contact is clickable and navigates to the chat page for that contact. Includes a search bar to find new users by username or profile number using findUsersByUsername and findUserByProfileNumber. Shows pending contact requests using getPendingContactRequests with accept/decline buttons that call acceptContactRequest and declineContactRequest. Styled with dark theme and neon highlights."
+        },
+        {
+          "path": "frontend/src/hooks/useContacts.ts",
+          "operation": "create",
+          "description": "Create a custom hook that fetches the current user's contacts using getCallerContacts backend method. Uses React Query for caching and automatic refetching."
+        },
+        {
+          "path": "frontend/src/hooks/useConversation.ts",
+          "operation": "create",
+          "description": "Create a custom hook that fetches messages for a conversation with a specific contact using getConversation backend method. Accepts a Principal parameter. Uses React Query for caching."
+        },
+        {
+          "path": "frontend/src/hooks/useSendMessage.ts",
+          "operation": "create",
+          "description": "Create a custom hook that wraps the sendMessage backend method using useMutation. Invalidates the conversation query after successful send."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add routes for /contacts and /chat/:contactId. Wire ContactsPage and ChatPage into the router. Ensure navigation links are available in the main layout."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Build photo sharing UI for chats and profile feed",
+      "acceptanceCriteria": [
+        "Users can attach and send photos in chat messages.",
+        "Shared photos are visible in a profile/feed gallery.",
+        "Photos are stored and retrievable from the backend."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/PhotoUploader.tsx",
+          "operation": "create",
+          "description": "Create a photo uploader component that allows users to select an image file from their device. Converts the file to ExternalBlob using ExternalBlob.fromBytes. Includes upload progress indicator using withUploadProgress. Calls sharePhoto backend method to store the photo. Styled with dark theme and neon upload button."
+        },
+        {
+          "path": "frontend/src/components/PhotoGallery.tsx",
+          "operation": "create",
+          "description": "Create a gallery component that displays photos in a grid layout. Fetches photos using getUserPhotoFeed or getUserPhotos backend methods. Each photo uses ExternalBlob.getDirectURL() for display. Includes lightbox view on click. Styled with dark background and glowing card borders."
+        },
+        {
+          "path": "frontend/src/hooks/usePhotoFeed.ts",
+          "operation": "create",
+          "description": "Create a custom hook that fetches a user's photo feed using getUserPhotoFeed or getUserPhotos backend methods. Accepts an optional Principal parameter (defaults to current user). Uses React Query for caching."
+        },
+        {
+          "path": "frontend/src/hooks/useSharePhoto.ts",
+          "operation": "create",
+          "description": "Create a custom hook that wraps the sharePhoto backend method using useMutation. Invalidates photo feed queries after successful upload."
+        },
+        {
+          "path": "frontend/src/components/MessageInput.tsx",
+          "operation": "modify",
+          "description": "Add a photo attachment button to the message input component. When clicked, opens file picker to select an image. Uploads photo using sharePhoto and optionally embeds a reference in the chat. Includes visual preview of selected photo before sending."
+        },
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "modify",
+          "description": "Integrate PhotoGallery component into the profile page to display the user's shared photos. Uses usePhotoFeed hook to fetch photos for the displayed profile."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Build video sharing UI for chats and profile feed",
+      "acceptanceCriteria": [
+        "Users can attach and send video files in chat.",
+        "Videos play inline in the chat or feed.",
+        "Videos are stored and retrievable from the backend."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VideoUploader.tsx",
+          "operation": "create",
+          "description": "Create a video uploader component that allows users to select a video file from their device. Converts the file to ExternalBlob using ExternalBlob.fromBytes. Includes upload progress indicator using withUploadProgress. Calls shareVideo backend method to store the video. Styled with dark theme and neon upload button."
+        },
+        {
+          "path": "frontend/src/components/VideoGallery.tsx",
+          "operation": "create",
+          "description": "Create a gallery component that displays videos in a grid layout. Fetches videos using getUserVideoFeed or getUserVideos backend methods. Each video uses ExternalBlob.getDirectURL() for the video source and includes HTML5 video player with controls. Styled with dark background and glowing card borders."
+        },
+        {
+          "path": "frontend/src/hooks/useVideoFeed.ts",
+          "operation": "create",
+          "description": "Create a custom hook that fetches a user's video feed using getUserVideoFeed or getUserVideos backend methods. Accepts an optional Principal parameter (defaults to current user). Uses React Query for caching."
+        },
+        {
+          "path": "frontend/src/hooks/useShareVideo.ts",
+          "operation": "create",
+          "description": "Create a custom hook that wraps the shareVideo backend method using useMutation. Invalidates video feed queries after successful upload."
+        },
+        {
+          "path": "frontend/src/components/MessageInput.tsx",
+          "operation": "modify",
+          "description": "Add a video attachment button to the message input component. When clicked, opens file picker to select a video. Uploads video using shareVideo and optionally embeds a reference in the chat. Includes visual preview of selected video before sending."
+        },
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "modify",
+          "description": "Integrate VideoGallery component into the profile page to display the user's shared videos. Uses useVideoFeed hook to fetch videos for the displayed profile."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Build AI image generation UI on a dedicated Create tab",
+      "acceptanceCriteria": [
+        "A 'Create' tab or section is accessible from the main navigation.",
+        "Users can type a prompt and trigger image generation.",
+        "Generated images can be saved or shared in a chat."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/CreatePage.tsx",
+          "operation": "create",
+          "description": "Create a Create page with two sections: image generation and video generation (REQ-7). For image generation, include a text input for prompt and a generate button. Display a loading state during generation. Show the generated image with options to save (using sharePhoto) or share in a chat. Uses dark theme with vibrant neon buttons and glowing input fields. Note: Image generation is simulated or placeholder; no external AI API integration per nonGoals."
+        },
+        {
+          "path": "frontend/src/components/ImageGenerator.tsx",
+          "operation": "create",
+          "description": "Create a component for AI image generation. Includes prompt input, generate button, and result display area. On generate, simulates or uses a placeholder image generation process (no external AI API per nonGoals). Displays the generated image using ExternalBlob.getDirectURL() once available. Provides save and share buttons that call sharePhoto. Styled with neon glow effects and animated shimmer on the generate button."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add a route for /create and wire CreatePage into the router. Add a 'Create' navigation link in the main layout or tab bar, styled with neon accent color."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Build AI video generation UI on the Create tab",
+      "acceptanceCriteria": [
+        "Video generation prompt input is available on the 'Create' tab.",
+        "A generated video clip can be previewed, saved, or shared.",
+        "Feature is visually distinct from image generation but on the same tab."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VideoGenerator.tsx",
+          "operation": "create",
+          "description": "Create a component for AI video generation. Includes prompt input, generate button, and result display area. On generate, simulates or uses a placeholder video generation process (no external AI API per nonGoals). Displays the generated video using ExternalBlob.getDirectURL() with an HTML5 video player once available. Provides save and share buttons that call shareVideo. Styled with neon glow effects and animated shimmer on the generate button."
+        },
+        {
+          "path": "frontend/src/pages/CreatePage.tsx",
+          "operation": "modify",
+          "description": "Integrate the VideoGenerator component into the CreatePage below the ImageGenerator component. Use a visual separator or section heading to distinguish the two generation features. Ensure consistent dark theme styling with neon accents."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Apply dark theme with neon accents, glowing UI elements, and animated text effects across all screens",
+      "acceptanceCriteria": [
+        "All screens use a consistent dark background.",
+        "Accent colors and glowing effects are applied to buttons, icons, and headings.",
+        "At least one animated text effect (e.g., shimmer or glow) is used on key UI elements.",
+        "Typography and layout feel polished and futuristic."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Update global CSS to define a dark theme with near-black backgrounds, vibrant neon accent colors (electric violet, cyan, hot pink), and glowing effects. Add CSS keyframes for shimmer, glow, and typewriter animations. Define utility classes for glowing buttons, borders, and text shadows. Set base typography with a modern futuristic font stack."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend Tailwind theme with custom dark background colors, neon accent colors (violet, cyan, pink), gradient utilities, and animation configurations for shimmer, glow, and pulse effects. Add custom box-shadow utilities for glowing elements."
+        },
+        {
+          "path": "frontend/src/components/AnimatedHeading.tsx",
+          "operation": "create",
+          "description": "Create a reusable animated heading component that applies shimmer or glow text effects. Accepts text and animation type as props. Uses CSS animations defined in index.css. Styled with neon gradient text."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Apply dark theme background to the root layout. Use AnimatedHeading for the app title or logo. Ensure all navigation links and buttons use neon accent colors and glow effects."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "create",
+          "description": "Create a Layout component that wraps all pages with consistent dark theme styling, navigation bar, and footer. Applies glowing borders and neon accents. Includes the ShareServe logo from frontend/public/assets/generated/shareserve-logo.dim_256x256.png and uses the app background texture from frontend/public/assets/generated/app-bg.dim_1920x1080.png as a fixed background."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Add Video Facts carousel widget on the home/discovery screen",
+      "acceptanceCriteria": [
+        "A 'Video Facts' section is visible on the home or discovery screen.",
+        "At least 3 fact cards are displayed in a horizontal carousel or swipeable list.",
+        "Each card shows a video/animation background with an overlaid text fact."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VideoFactsCarousel.tsx",
+          "operation": "create",
+          "description": "Create a carousel component that displays at least 3 video fact cards. Each card includes a video background (using frontend/public/assets/generated/video-facts-bg.dim_800x450.png as placeholder) with overlaid text containing an interesting fact about space, science, or history. Implements horizontal scrolling or swipe navigation. Styled with dark theme, glowing card borders, and neon text."
+        },
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "create",
+          "description": "Create a home/discovery page that includes the VideoFactsCarousel component prominently. Also displays recent activity, suggested contacts, or featured content. Styled with dark background and neon accents."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add a route for / (home) and wire HomePage into the router. Set HomePage as the default landing page after login. Add a 'Home' or 'Discover' navigation link in the main layout."
+        }
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "summary": "Build user profile screen with profile details, media gallery, and edit button",
+      "acceptanceCriteria": [
+        "Profile screen displays all listed fields.",
+        "Gallery shows photos and videos shared by the user.",
+        "An edit button allows updating display name, bio, and avatar."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "create",
+          "description": "Create a profile page that displays user profile information: profile number, avatar (using avatarUrl or profilePic ExternalBlob if available via getUserProfile), display name, username, and bio. Integrates PhotoGallery and VideoGallery components (from REQ-4 and REQ-5) to show the user's shared media. Includes an edit button that opens a profile edit modal or navigates to an edit page. Styled with dark theme, glowing profile card, and neon accent highlights."
+        },
+        {
+          "path": "frontend/src/components/ProfileEditModal.tsx",
+          "operation": "create",
+          "description": "Create a modal component for editing profile details. Includes input fields for display name, bio, and avatar URL. On save, calls updateCallerUserProfile or saveCallerUserProfile backend method. Includes cancel and save buttons. Styled with dark overlay, glowing form fields, and neon save button."
+        },
+        {
+          "path": "frontend/src/hooks/useUserProfile.ts",
+          "operation": "create",
+          "description": "Create a custom hook that fetches a user's profile using getUserProfile backend method. Accepts an optional Principal parameter (defaults to current user via getCallerUserProfile). Uses React Query for caching."
+        },
+        {
+          "path": "frontend/src/hooks/useUpdateProfile.ts",
+          "operation": "create",
+          "description": "Create a custom hook that wraps the updateCallerUserProfile backend method using useMutation. Invalidates the user profile query after successful update."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add a route for /profile and /profile/:userId to support viewing the current user's profile and other users' profiles. Wire ProfilePage into the router. Add a profile link in the main navigation or user menu."
+        }
+      ]
+    }
+  ]
+}

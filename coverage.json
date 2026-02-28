@@ -1,0 +1,292 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-28T18:53:13.500Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 10,
+    "implemented": 8,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Implement backend user account system: users can register with a unique username, auto-generated profile number (e.g., #00123), display name, avatar URL, and bio. Store profiles in stable backend state. Support login via Internet Identity.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-10",
+        "summary": "Build a user profile screen showing: profile number, avatar, display name, username, bio, post/photo/video gallery, and a button to edit profile details.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/components/ProfileEditModal.tsx",
+          "frontend/src/hooks/useUserProfile.ts",
+          "frontend/src/hooks/useUpdateProfile.ts",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Implement a contacts system: users can search for other users by username or profile number, send contact requests, accept or decline requests, and view their contacts list.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Implement in-app messaging between registered users: users can send and receive text messages in one-on-one chat threads. Messages are stored in the backend and retrieved per conversation. Messaging only works between accounts within the app — no external SMS or phone network integration.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/ChatPage.tsx",
+          "frontend/src/components/MessageList.tsx",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/pages/ContactsPage.tsx",
+          "frontend/src/hooks/useContacts.ts",
+          "frontend/src/hooks/useConversation.ts",
+          "frontend/src/hooks/useSendMessage.ts",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/ChatPage.tsx",
+          "frontend/src/components/MessageList.tsx",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/pages/ContactsPage.tsx",
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Implement photo sharing in chats and on a user profile feed: users can upload photos (stored as base64 or asset URL in the backend), share them in messages, and view shared photos in a gallery-style feed.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/PhotoUploader.tsx",
+          "frontend/src/components/PhotoGallery.tsx",
+          "frontend/src/hooks/usePhotoFeed.ts",
+          "frontend/src/hooks/useSharePhoto.ts",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/pages/ProfilePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/PhotoUploader.tsx",
+          "frontend/src/components/PhotoGallery.tsx",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/pages/ProfilePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Implement video sharing in chats and on a user profile feed: users can upload short videos, share them in messages, and play them inline within the chat or feed view.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/VideoUploader.tsx",
+          "frontend/src/components/VideoGallery.tsx",
+          "frontend/src/hooks/useVideoFeed.ts",
+          "frontend/src/hooks/useShareVideo.ts",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/pages/ProfilePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/VideoUploader.tsx",
+          "frontend/src/components/VideoGallery.tsx",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/pages/ProfilePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Add an AI image generation feature accessible from a dedicated 'Create' tab: users enter a text prompt and receive a generated image they can save to their profile or share in a chat. Generation follows standard content policies.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/CreatePage.tsx",
+          "frontend/src/components/ImageGenerator.tsx",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/CreatePage.tsx",
+          "frontend/src/components/ImageGenerator.tsx",
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Add an AI video generation feature on the same 'Create' tab: users enter a text prompt or description and receive a generated short video clip they can save or share. Generation follows standard content policies.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/VideoGenerator.tsx",
+          "frontend/src/pages/CreatePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/VideoGenerator.tsx",
+          "frontend/src/pages/CreatePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-8",
+        "summary": "Build the full frontend UI with a dark theme: deep dark backgrounds (near-black), vibrant neon accent colors (e.g., electric violet, cyan, hot pink), glowing UI elements, animated text effects (shimmer, glow, typewriter), gradient highlights, and a sleek futuristic layout. Apply the theme consistently across all screens.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/components/AnimatedHeading.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/Layout.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/components/AnimatedHeading.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/Layout.tsx"
+        ]
+      },
+      {
+        "id": "REQ-9",
+        "summary": "Add a 'Video Facts' section or widget on the home/discovery screen: display a rotating carousel of short informational video cards covering interesting topics (space, science, history, etc.). Videos are static placeholder clips with overlay text facts.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/VideoFactsCarousel.tsx",
+          "frontend/src/pages/HomePage.tsx",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/VideoFactsCarousel.tsx",
+          "frontend/src/pages/HomePage.tsx",
+          "frontend/src/App.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/authorization/MixinAuthorization.mo",
+    "backend/authorization/access-control.mo",
+    "backend/blob-storage/Mixin.mo",
+    "backend/blob-storage/Storage.mo",
+    "backend/main.mo",
+    "build-request.json",
+    "build-template/Dockerfile",
+    "build-template/LICENSE",
+    "build-template/README.md",
+    "build-template/deploy.sh",
+    "build-template/icp.yaml",
+    "build-template/package.json",
+    "build-template/pnpm-lock.yaml",
+    "build-template/pnpm-workspace.yaml",
+    "build-template/scripts/prune-unused-images.js",
+    "build-template/scripts/resize-images.js",
+    "build-template/src/backend/canister.yaml",
+    "build-template/src/backend/system-idl/aaaaa-aa.did",
+    "build-template/src/frontend/canister.yaml",
+    "build-template/src/frontend/components.json",
+    "build-template/src/frontend/env.json",
+    "build-template/src/frontend/eslint-rules/no-bigint-in-query-keys.js",
+    "build-template/src/frontend/eslint-rules/require-internet-identity-provider.js",
+    "build-template/src/frontend/eslint.config.js",
+    "build-template/src/frontend/package.json",
+    "build-template/src/frontend/postcss.config.js",
+    "build-template/src/frontend/src/components/ui/accordion.tsx",
+    "build-template/src/frontend/src/components/ui/alert-dialog.tsx",
+    "build-template/src/frontend/src/components/ui/alert.tsx",
+    "build-template/src/frontend/src/components/ui/aspect-ratio.tsx",
+    "build-template/src/frontend/src/components/ui/avatar.tsx",
+    "build-template/src/frontend/src/components/ui/badge.tsx",
+    "build-template/src/frontend/src/components/ui/breadcrumb.tsx",
+    "build-template/src/frontend/src/components/ui/button.tsx",
+    "build-template/src/frontend/src/components/ui/calendar.tsx",
+    "build-template/src/frontend/src/components/ui/card.tsx",
+    "build-template/src/frontend/src/components/ui/carousel.tsx",
+    "build-template/src/frontend/src/components/ui/chart.tsx",
+    "build-template/src/frontend/src/components/ui/checkbox.tsx",
+    "build-template/src/frontend/src/components/ui/collapsible.tsx",
+    "build-template/src/frontend/src/components/ui/command.tsx",
+    "build-template/src/frontend/src/components/ui/context-menu.tsx",
+    "build-template/src/frontend/src/components/ui/dialog.tsx",
+    "build-template/src/frontend/src/components/ui/drawer.tsx",
+    "build-template/src/frontend/src/components/ui/dropdown-menu.tsx",
+    "build-template/src/frontend/src/components/ui/form.tsx",
+    "build-template/src/frontend/src/components/ui/hover-card.tsx",
+    "build-template/src/frontend/src/components/ui/input-otp.tsx",
+    "build-template/src/frontend/src/components/ui/input.tsx",
+    "build-template/src/frontend/src/components/ui/label.tsx",
+    "build-template/src/frontend/src/components/ui/menubar.tsx",
+    "build-template/src/frontend/src/components/ui/navigation-menu.tsx",
+    "build-template/src/frontend/src/components/ui/pagination.tsx",
+    "build-template/src/frontend/src/components/ui/popover.tsx",
+    "build-template/src/frontend/src/components/ui/progress.tsx",
+    "build-template/src/frontend/src/components/ui/radio-group.tsx",
+    "build-template/src/frontend/src/components/ui/resizable.tsx",
+    "build-template/src/frontend/src/components/ui/scroll-area.tsx",
+    "build-template/src/frontend/src/components/ui/select.tsx",
+    "build-template/src/frontend/src/components/ui/separator.tsx",
+    "build-template/src/frontend/src/components/ui/sheet.tsx",
+    "build-template/src/frontend/src/components/ui/sidebar.tsx",
+    "build-template/src/frontend/src/components/ui/skeleton.tsx",
+    "build-template/src/frontend/src/components/ui/slider.tsx",
+    "build-template/src/frontend/src/components/ui/sonner.tsx",
+    "build-template/src/frontend/src/components/ui/switch.tsx",
+    "build-template/src/frontend/src/components/ui/table.tsx",
+    "build-template/src/frontend/src/components/ui/tabs.tsx",
+    "build-template/src/frontend/src/components/ui/textarea.tsx",
+    "build-template/src/frontend/src/components/ui/toggle-group.tsx",
+    "build-template/src/frontend/src/components/ui/toggle.tsx",
+    "build-template/src/frontend/src/components/ui/tooltip.tsx",
+    "build-template/src/frontend/src/hooks/use-mobile.tsx",
+    "build-template/src/frontend/src/lib/utils.ts",
+    "build-template/src/frontend/tsconfig.json",
+    "build-template/src/frontend/vite.config.js",
+    "build-template/tsconfig.json",
+    "caffeine.lock.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/public/assets/generated/app-bg.dim_1920x1080.png",
+    "frontend/public/assets/generated/shareserve-logo.dim_256x256.png",
+    "frontend/public/assets/generated/video-facts-bg.dim_800x450.png",
+    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/AnimatedHeading.tsx",
+    "frontend/src/components/ImageGenerator.tsx",
+    "frontend/src/components/Layout.tsx",
+    "frontend/src/components/MessageInput.tsx",
+    "frontend/src/components/MessageList.tsx",
+    "frontend/src/components/PhotoGallery.tsx",
+    "frontend/src/components/PhotoUploader.tsx",
+    "frontend/src/components/VideoFactsCarousel.tsx",
+    "frontend/src/components/VideoGallery.tsx",
+    "frontend/src/components/VideoGenerator.tsx",
+    "frontend/src/components/VideoUploader.tsx",
+    "frontend/src/config.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/index.css",
+    "frontend/src/main.tsx",
+    "frontend/src/pages/ChatPage.tsx",
+    "frontend/src/pages/ContactsPage.tsx",
+    "frontend/src/pages/CreatePage.tsx",
+    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/pages/LoginPage.tsx",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/pages/RegisterPage.tsx",
+    "frontend/src/ui-summary.json",
+    "frontend/src/utils/StorageClient.ts",
+    "frontend/src/utils/urlParams.ts",
+    "frontend/tailwind.config.js",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

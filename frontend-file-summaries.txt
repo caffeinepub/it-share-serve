@@ -1,0 +1,7 @@
+{
+  "frontend/src/pages/ProfilePage.tsx": "Full user profile page showing avatar, display name, username, profile number, bio, and tabbed photo/video galleries. Includes an edit modal for updating display name, bio, avatar URL, and uploading a new profile picture with progress tracking.",
+  "frontend/src/components/ImageGenerator.tsx": "AI image generation component with a prompt input, animated generation state, placeholder image results, and save/download/regenerate actions that integrate with the sharePhoto backend method.",
+  "frontend/src/components/VideoGenerator.tsx": "AI video generation component with a prompt input, animated progress bar during generation, placeholder video thumbnail results with a play overlay, and save/download/regenerate actions that integrate with the shareVideo backend method.",
+  "frontend/src/pages/CreatePage.tsx": "Create page with two tabs — \"AI Generate\" (ImageGenerator + VideoGenerator) and \"Upload Media\" (PhotoUploader + VideoUploader) — with neon-styled section headers and separators.",
+  "frontend/src/App.tsx": "Main app entry with TanStack Router setup, AuthGate for login/registration gating, and all routes wired (home, contacts, chat, profile, create). Removed unused `redirect` import."
+}

@@ -1,0 +1,216 @@
+{
+  "kind": "build_request",
+  "title": "ShareServe — Instant Messaging App with Photo/Video Sharing and AI Generation",
+  "projectName": "ShareServe",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Implement backend user account system: users can register with a unique username, auto-generated profile number (e.g., #00123), display name, avatar URL, and bio. Store profiles in stable backend state. Support login via Internet Identity.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "you can create an account and create its own number and profile"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A user can register and receive a unique profile number.",
+        "Profile data (username, display name, avatar, bio) is persisted in the backend.",
+        "Login is gated by Internet Identity."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Implement a contacts system: users can search for other users by username or profile number, send contact requests, accept or decline requests, and view their contacts list.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Contacts"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A user can search for another user by username or profile number.",
+        "Contact requests can be sent, accepted, or declined.",
+        "Accepted contacts appear in the user's contacts list."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement in-app messaging between registered users: users can send and receive text messages in one-on-one chat threads. Messages are stored in the backend and retrieved per conversation. Messaging only works between accounts within the app — no external SMS or phone network integration.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2",
+          "msg-8"
+        ],
+        "quotes": [
+          "messaging is between in-app accounts only"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A user can open a chat with a contact and send text messages.",
+        "Messages are stored and retrievable from the backend.",
+        "No external phone or SMS integration exists."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Implement photo sharing in chats and on a user profile feed: users can upload photos (stored as base64 or asset URL in the backend), share them in messages, and view shared photos in a gallery-style feed.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "photo sharing"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can attach and send photos in chat messages.",
+        "Shared photos are visible in a profile/feed gallery.",
+        "Photos are stored and retrievable from the backend."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Implement video sharing in chats and on a user profile feed: users can upload short videos, share them in messages, and play them inline within the chat or feed view.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2",
+          "msg-10"
+        ],
+        "quotes": [
+          "video generators",
+          "Video generation two"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can attach and send video files in chat.",
+        "Videos play inline in the chat or feed.",
+        "Videos are stored and retrievable from the backend."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add an AI image generation feature accessible from a dedicated 'Create' tab: users enter a text prompt and receive a generated image they can save to their profile or share in a chat. Generation follows standard content policies.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2",
+          "msg-6"
+        ],
+        "quotes": [
+          "you can create image generations on it"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Create' tab or section is accessible from the main navigation.",
+        "Users can type a prompt and trigger image generation.",
+        "Generated images can be saved or shared in a chat."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Add an AI video generation feature on the same 'Create' tab: users enter a text prompt or description and receive a generated short video clip they can save or share. Generation follows standard content policies.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-10"
+        ],
+        "quotes": [
+          "Video generation two"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Video generation prompt input is available on the 'Create' tab.",
+        "A generated video clip can be previewed, saved, or shared.",
+        "Feature is visually distinct from image generation but on the same tab."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Build the full frontend UI with a dark theme: deep dark backgrounds (near-black), vibrant neon accent colors (e.g., electric violet, cyan, hot pink), glowing UI elements, animated text effects (shimmer, glow, typewriter), gradient highlights, and a sleek futuristic layout. Apply the theme consistently across all screens.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "dark theme",
+          "make the app cool looking",
+          "text effects"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All screens use a consistent dark background.",
+        "Accent colors and glowing effects are applied to buttons, icons, and headings.",
+        "At least one animated text effect (e.g., shimmer or glow) is used on key UI elements.",
+        "Typography and layout feel polished and futuristic."
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Add a 'Video Facts' section or widget on the home/discovery screen: display a rotating carousel of short informational video cards covering interesting topics (space, science, history, etc.). Videos are static placeholder clips with overlay text facts.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "video facts and all kinds of things"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Video Facts' section is visible on the home or discovery screen.",
+        "At least 3 fact cards are displayed in a horizontal carousel or swipeable list.",
+        "Each card shows a video/animation background with an overlaid text fact."
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "text": "Build a user profile screen showing: profile number, avatar, display name, username, bio, post/photo/video gallery, and a button to edit profile details.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "profile"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Profile screen displays all listed fields.",
+        "Gallery shows photos and videos shared by the user.",
+        "An edit button allows updating display name, bio, and avatar."
+      ]
+    }
+  ],
+  "constraints": [
+    "No external SMS, phone network, or real-world messaging integration.",
+    "AI generation must follow standard content policies — no unmoderated or unrestricted generation.",
+    "All backend logic must live in a single Motoko actor (backend/main.mo).",
+    "Do not modify any files under frontend/src/hooks/ or frontend/src/components/ui."
+  ],
+  "nonGoals": [
+    "Real-time WebSocket-based messaging (polling or query-based updates only).",
+    "External AI API integration (OpenAI, Stability AI, etc.).",
+    "SMS verification or real phone number assignment.",
+    "Video calling or live streaming.",
+    "Third-party OAuth login (only Internet Identity)."
+  ],
+  "imageRequirements": {
+    "required": [
+      "ShareServe app logo — bold neon-outlined 'S' monogram with a glowing electric violet and cyan gradient on a near-black background, modern futuristic style (shareserve-logo.dim_256x256.png)",
+      "Dark abstract background texture with faint grid lines and subtle neon glow particles for use as a full-screen app background (app-bg.dim_1920x1080.png)",
+      "Video facts card placeholder background — blurred cosmic/space scene with deep blues and purples (video-facts-bg.dim_800x450.png)"
+    ],
+    "edits": []
+  }
+}

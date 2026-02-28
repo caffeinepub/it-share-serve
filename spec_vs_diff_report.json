@@ -1,0 +1,84 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-28T18:53:13.496Z",
+  "summary": "The diff implements a fairly comprehensive ShareServe app covering most requirements. The backend handles user profiles, contacts, messaging, photo/video sharing. The frontend covers login/register, contacts, chat, profile, create tab with AI image and video generation (simulated), video facts carousel, and a dark neon theme. However, several acceptance criteria have partial or notable implementation gaps, particularly around contacts (principal ID handling is broken/incomplete), chat messaging (conversation retrieval is broken due to principal routing limitation), and the share-in-chat feature for generated AI content.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "Contact requests can be sent, accepted, or declined; accepted contacts appear in the contacts list.",
+      "reason": "The ContactsPage explicitly acknowledges it cannot retrieve principal IDs from UserProfile, causing handleAccept to always show an error and handleSendRequest to show a placeholder toast. The contacts system is functionally broken at the frontend level.",
+      "evidence": [
+        "frontend/src/pages/ContactsPage.tsx"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "A user can open a chat with a contact and send text messages; messages are stored and retrievable from the backend.",
+      "reason": "ChatPage calls useGetConversation(undefined) passing undefined for the contact principal, meaning conversation retrieval is always empty and non-functional. The page comments acknowledge the principal routing limitation so messages cannot actually be sent to or retrieved for a specific contact.",
+      "evidence": [
+        "frontend/src/pages/ChatPage.tsx"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Generated images can be saved or shared in a chat.",
+      "reason": "ImageGenerator only supports saving to profile and downloading. There is no UI or flow to share a generated image directly into a chat conversation.",
+      "evidence": [
+        "frontend/src/components/ImageGenerator.tsx"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "requirement": "A generated video clip can be previewed, saved, or shared in chat.",
+      "reason": "VideoGenerator supports saving to profile and downloading but does not provide a share-to-chat flow. Additionally the generated video is only a static thumbnail image rather than an actual video clip.",
+      "evidence": [
+        "frontend/src/components/VideoGenerator.tsx"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Phone and Video call buttons in the chat header UI",
+      "reason": "The build request explicitly lists video calling as a non-goal and has no requirement for phone call UI. The ChatPage renders Phone and Video icon buttons in the chat header.",
+      "evidence": [
+        "frontend/src/pages/ChatPage.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.8,
+  "changed_files": [
+    "all_files_summary.json",
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AnimatedHeading.tsx",
+    "frontend/src/components/ImageGenerator.tsx",
+    "frontend/src/components/Layout.tsx",
+    "frontend/src/components/MessageInput.tsx",
+    "frontend/src/components/MessageList.tsx",
+    "frontend/src/components/PhotoGallery.tsx",
+    "frontend/src/components/PhotoUploader.tsx",
+    "frontend/src/components/VideoFactsCarousel.tsx",
+    "frontend/src/components/VideoGallery.tsx",
+    "frontend/src/components/VideoGenerator.tsx",
+    "frontend/src/components/VideoUploader.tsx",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/index.css",
+    "frontend/src/main.tsx",
+    "frontend/src/pages/ChatPage.tsx",
+    "frontend/src/pages/ContactsPage.tsx",
+    "frontend/src/pages/CreatePage.tsx",
+    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/pages/LoginPage.tsx",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/pages/RegisterPage.tsx",
+    "frontend/src/utils/urlParams.ts",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}
