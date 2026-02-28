@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { ExternalBlob } from '../backend';
 import { useShareVideo } from '../hooks/useQueries';
+import { useAuth } from '../hooks/useAuth';
 import { Upload, Video, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
@@ -15,6 +16,7 @@ export default function VideoUploader({ onUploaded }: VideoUploaderProps) {
   const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const shareVideo = useShareVideo();
+  const { username } = useAuth();
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -23,11 +25,11 @@ export default function VideoUploader({ onUploaded }: VideoUploaderProps) {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !username) return;
     try {
       const bytes = new Uint8Array(await selectedFile.arrayBuffer());
       const blob = ExternalBlob.fromBytes(bytes).withUploadProgress(pct => setProgress(pct));
-      await shareVideo.mutateAsync(blob);
+      await shareVideo.mutateAsync({ username, blob });
       toast.success('Video uploaded successfully!');
       setPreview(null);
       setSelectedFile(null);

@@ -1,15 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { type Message } from '../backend';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle } from 'lucide-react';
 
 interface MessageListProps {
   messages: Message[];
-  myPrincipal: string;
+  myUsername: string;
   isLoading: boolean;
   contactName: string;
-  contactAvatar: string;
 }
 
 function formatTime(timestamp: bigint): string {
@@ -20,10 +19,9 @@ function formatTime(timestamp: bigint): string {
 
 export default function MessageList({
   messages,
-  myPrincipal,
+  myUsername,
   isLoading,
   contactName,
-  contactAvatar,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -58,19 +56,18 @@ export default function MessageList({
     <ScrollArea className="h-full">
       <div className="p-4 space-y-3">
         {messages.map((msg, idx) => {
-          const isMine = msg.sender.toString() === myPrincipal;
+          const isMine = msg.senderUsername === myUsername;
           return (
             <div key={idx} className={`flex gap-2 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
               {!isMine && (
-                <Avatar className="w-7 h-7 border border-neon-violet/20 flex-shrink-0 mt-1">
-                  <AvatarImage src={contactAvatar} />
+                <Avatar className="w-7 h-7 border border-neon-violet/20 shrink-0 mt-1">
                   <AvatarFallback className="bg-secondary text-xs font-orbitron text-neon-violet">
                     {contactName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               )}
               <div className={`max-w-[70%] ${isMine ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                <div className={`px-4 py-2.5 text-sm ${isMine ? 'message-bubble-sent' : 'message-bubble-received'}`}>
+                <div className={`px-4 py-2.5 text-sm rounded-2xl ${isMine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-card border border-border text-foreground rounded-bl-sm'}`}>
                   {msg.content}
                 </div>
                 <span className="text-[10px] text-muted-foreground px-1">

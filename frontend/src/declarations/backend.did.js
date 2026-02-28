@@ -19,6 +19,7 @@ export const _CaffeineStorageRefillResult = IDL.Record({
   'success' : IDL.Opt(IDL.Bool),
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
+export const Username = IDL.Text;
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
@@ -27,15 +28,13 @@ export const UserRole = IDL.Variant({
 });
 export const UserProfile = IDL.Record({
   'bio' : IDL.Text,
-  'username' : IDL.Text,
+  'username' : Username,
   'profileNumber' : IDL.Nat,
   'displayName' : IDL.Text,
-  'avatarUrl' : IDL.Text,
-  'profilePic' : IDL.Opt(ExternalBlob),
 });
 export const Message = IDL.Record({
   'content' : IDL.Text,
-  'sender' : IDL.Principal,
+  'senderUsername' : Username,
   'timestamp' : IDL.Int,
 });
 
@@ -67,52 +66,49 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-  'acceptContactRequest' : IDL.Func([IDL.Principal], [], []),
-  'addPhotoToFeed' : IDL.Func([ExternalBlob], [], []),
-  'addVideoToFeed' : IDL.Func([ExternalBlob], [], []),
+  'acceptContactRequest' : IDL.Func([Username, Username], [], []),
+  'addPhotoToFeed' : IDL.Func([Username, ExternalBlob], [], []),
+  'addVideoToFeed' : IDL.Func([Username, ExternalBlob], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'declineContactRequest' : IDL.Func([IDL.Principal], [], []),
+  'declineContactRequest' : IDL.Func([Username, Username], [], []),
   'findUserByProfileNumber' : IDL.Func([IDL.Nat], [UserProfile], ['query']),
   'findUsersByUsername' : IDL.Func(
       [IDL.Text],
       [IDL.Vec(UserProfile)],
       ['query'],
     ),
-  'getCallerContacts' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
-  'getCallerUserProfile' : IDL.Func([], [UserProfile], ['query']),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getConversation' : IDL.Func([IDL.Principal], [IDL.Vec(Message)], ['query']),
-  'getPendingContactRequests' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
-  'getUserPhotoFeed' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Vec(ExternalBlob)],
+  'getContacts' : IDL.Func([Username], [IDL.Vec(UserProfile)], ['query']),
+  'getConversation' : IDL.Func(
+      [Username, Username],
+      [IDL.Vec(Message)],
       ['query'],
     ),
-  'getUserPhotos' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Vec(ExternalBlob)],
+  'getPendingContactRequests' : IDL.Func(
+      [Username],
+      [IDL.Vec(UserProfile)],
       ['query'],
     ),
-  'getUserProfile' : IDL.Func([IDL.Principal], [UserProfile], ['query']),
-  'getUserVideoFeed' : IDL.Func(
+  'getProfileByPrincipal' : IDL.Func(
       [IDL.Principal],
-      [IDL.Vec(ExternalBlob)],
+      [IDL.Opt(UserProfile)],
       ['query'],
     ),
-  'getUserVideos' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Vec(ExternalBlob)],
-      ['query'],
-    ),
+  'getUserPhotoFeed' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
+  'getUserPhotos' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
+  'getUserProfile' : IDL.Func([Username], [UserProfile], ['query']),
+  'getUserVideoFeed' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
+  'getUserVideos' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'register' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
+  'loginUser' : IDL.Func([Username, IDL.Text], [IDL.Bool], []),
+  'registerUser' : IDL.Func([Username, IDL.Text, IDL.Text, IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'sendContactRequest' : IDL.Func([IDL.Principal], [], []),
-  'sendMessage' : IDL.Func([IDL.Principal, IDL.Text], [], []),
-  'sharePhoto' : IDL.Func([ExternalBlob], [], []),
-  'shareVideo' : IDL.Func([ExternalBlob], [], []),
-  'updateCallerUserProfile' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
-  'uploadProfilePic' : IDL.Func([ExternalBlob], [], []),
+  'sendContactRequest' : IDL.Func([Username, Username], [], []),
+  'sendMessage' : IDL.Func([Username, Username, IDL.Text], [], []),
+  'sharePhoto' : IDL.Func([Username, ExternalBlob], [], []),
+  'shareVideo' : IDL.Func([Username, ExternalBlob], [], []),
+  'updateUserProfile' : IDL.Func([Username, IDL.Text, IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
@@ -129,6 +125,7 @@ export const idlFactory = ({ IDL }) => {
     'success' : IDL.Opt(IDL.Bool),
     'topped_up_amount' : IDL.Opt(IDL.Nat),
   });
+  const Username = IDL.Text;
   const ExternalBlob = IDL.Vec(IDL.Nat8);
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
@@ -137,15 +134,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserProfile = IDL.Record({
     'bio' : IDL.Text,
-    'username' : IDL.Text,
+    'username' : Username,
     'profileNumber' : IDL.Nat,
     'displayName' : IDL.Text,
-    'avatarUrl' : IDL.Text,
-    'profilePic' : IDL.Opt(ExternalBlob),
   });
   const Message = IDL.Record({
     'content' : IDL.Text,
-    'sender' : IDL.Principal,
+    'senderUsername' : Username,
     'timestamp' : IDL.Int,
   });
   
@@ -177,64 +172,57 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-    'acceptContactRequest' : IDL.Func([IDL.Principal], [], []),
-    'addPhotoToFeed' : IDL.Func([ExternalBlob], [], []),
-    'addVideoToFeed' : IDL.Func([ExternalBlob], [], []),
+    'acceptContactRequest' : IDL.Func([Username, Username], [], []),
+    'addPhotoToFeed' : IDL.Func([Username, ExternalBlob], [], []),
+    'addVideoToFeed' : IDL.Func([Username, ExternalBlob], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'declineContactRequest' : IDL.Func([IDL.Principal], [], []),
+    'declineContactRequest' : IDL.Func([Username, Username], [], []),
     'findUserByProfileNumber' : IDL.Func([IDL.Nat], [UserProfile], ['query']),
     'findUsersByUsername' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(UserProfile)],
         ['query'],
       ),
-    'getCallerContacts' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
-    'getCallerUserProfile' : IDL.Func([], [UserProfile], ['query']),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getContacts' : IDL.Func([Username], [IDL.Vec(UserProfile)], ['query']),
     'getConversation' : IDL.Func(
-        [IDL.Principal],
+        [Username, Username],
         [IDL.Vec(Message)],
         ['query'],
       ),
     'getPendingContactRequests' : IDL.Func(
-        [],
+        [Username],
         [IDL.Vec(UserProfile)],
         ['query'],
       ),
+    'getProfileByPrincipal' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
     'getUserPhotoFeed' : IDL.Func(
-        [IDL.Principal],
+        [Username],
         [IDL.Vec(ExternalBlob)],
         ['query'],
       ),
-    'getUserPhotos' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Vec(ExternalBlob)],
-        ['query'],
-      ),
-    'getUserProfile' : IDL.Func([IDL.Principal], [UserProfile], ['query']),
+    'getUserPhotos' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
+    'getUserProfile' : IDL.Func([Username], [UserProfile], ['query']),
     'getUserVideoFeed' : IDL.Func(
-        [IDL.Principal],
+        [Username],
         [IDL.Vec(ExternalBlob)],
         ['query'],
       ),
-    'getUserVideos' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Vec(ExternalBlob)],
-        ['query'],
-      ),
+    'getUserVideos' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'register' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
+    'loginUser' : IDL.Func([Username, IDL.Text], [IDL.Bool], []),
+    'registerUser' : IDL.Func([Username, IDL.Text, IDL.Text, IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'sendContactRequest' : IDL.Func([IDL.Principal], [], []),
-    'sendMessage' : IDL.Func([IDL.Principal, IDL.Text], [], []),
-    'sharePhoto' : IDL.Func([ExternalBlob], [], []),
-    'shareVideo' : IDL.Func([ExternalBlob], [], []),
-    'updateCallerUserProfile' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text],
-        [],
-        [],
-      ),
-    'uploadProfilePic' : IDL.Func([ExternalBlob], [], []),
+    'sendContactRequest' : IDL.Func([Username, Username], [], []),
+    'sendMessage' : IDL.Func([Username, Username, IDL.Text], [], []),
+    'sharePhoto' : IDL.Func([Username, ExternalBlob], [], []),
+    'shareVideo' : IDL.Func([Username, ExternalBlob], [], []),
+    'updateUserProfile' : IDL.Func([Username, IDL.Text, IDL.Text], [], []),
   });
 };
 

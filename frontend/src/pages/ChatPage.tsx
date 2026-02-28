@@ -1,121 +1,139 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from '@tanstack/react-router';
-import { useGetCallerContacts, useGetConversation, useSendMessage, useSharePhoto, useShareVideo } from '../hooks/useQueries';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { type UserProfile, ExternalBlob } from '../backend';
-import MessageList from '../components/MessageList';
-import MessageInput from '../components/MessageInput';
-import { ArrowLeft, Phone, Video, MoreVertical } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import AnimatedHeading from '../components/AnimatedHeading';
-import { toast } from 'sonner';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import { useAuth } from '../hooks/useAuth';
+import { useGetConversation, useSendMessage, useGetUserProfile } from '../hooks/useQueries';
+import type { Message } from '../backend';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 
 export default function ChatPage() {
-  const params = useParams({ from: '/layout/chat/$contactId' });
-  const contactId = params.contactId;
+  const { partnerUsername } = useParams({ from: '/layout/chat/$partnerUsername' });
+  const navigate = useNavigate();
+  const { username } = useAuth();
+  const [messageText, setMessageText] = useState('');
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { identity } = useInternetIdentity();
-  const { data: contacts = [] } = useGetCallerContacts();
-
-  // Find contact by username (contactId is username)
-  const contact = contacts.find(c => c.username === contactId);
-
-  // We need the principal to fetch conversation — but we only have UserProfile
-  // The chat routing uses username, but getConversation needs Principal
-  // Since we can't get principal from UserProfile, we'll show a message
-  const myPrincipal = identity?.getPrincipal().toString();
-
-  const { data: messages = [], isLoading } = useGetConversation(undefined);
+  const { data: partnerProfile } = useGetUserProfile(partnerUsername);
+  const { data: messages = [], isLoading } = useGetConversation(username, partnerUsername);
   const sendMessage = useSendMessage();
-  const sharePhoto = useSharePhoto();
-  const shareVideo = useShareVideo();
 
-  if (!contact) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-muted-foreground">
-        <div className="text-4xl mb-4">💬</div>
-        <p className="font-medium">Contact not found</p>
-        <p className="text-sm mt-1">This user may not be in your contacts</p>
-        <Link to="/contacts" className="mt-4 btn-neon-violet rounded-xl px-4 py-2 text-sm">
-          Go to Contacts
-        </Link>
-      </div>
-    );
-  }
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-  const avatarUrl = contact.profilePic?.getDirectURL() || contact.avatarUrl;
+  const handleSend = async () => {
+    if (!messageText.trim() || !username) return;
+    try {
+      await sendMessage.mutateAsync({
+        sender: username,
+        receiver: partnerUsername,
+        text: messageText.trim(),
+      });
+      setMessageText('');
+    } catch (err: any) {
+      console.error('Failed to send message:', err.message);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const partnerDisplayName = partnerProfile?.displayName || partnerUsername;
+  const partnerInitials = partnerDisplayName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)] max-w-3xl mx-auto">
-      {/* Chat Header */}
-      <div className="card-dark rounded-t-2xl border border-neon-violet/20 px-4 py-3 flex items-center gap-3">
-        <Link to="/contacts" className="text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <Avatar className="w-9 h-9 border border-neon-violet/30">
-          <AvatarImage src={avatarUrl} />
-          <AvatarFallback className="bg-secondary text-xs font-orbitron text-neon-violet">
-            {contact.displayName.slice(0, 2).toUpperCase()}
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-2xl mx-auto">
+      {/* Chat header */}
+      <div className="flex items-center gap-3 pb-4 border-b border-border">
+        <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/contacts' })}>
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <Avatar>
+          <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+            {partnerInitials}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1">
-          <p className="font-semibold text-sm">{contact.displayName}</p>
-          <p className="text-xs text-neon-green">● Online</p>
+        <div>
+          <p className="font-semibold text-foreground">{partnerDisplayName}</p>
+          <p className="text-xs text-muted-foreground">@{partnerUsername}</p>
         </div>
-        <div className="flex gap-2">
-          <button className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-neon-violet hover:border-neon-violet/40 transition-all">
-            <Phone className="w-4 h-4" />
-          </button>
-          <button className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-neon-violet hover:border-neon-violet/40 transition-all">
-            <Video className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Notice about principal limitation */}
-      <div className="bg-neon-violet/5 border-x border-neon-violet/20 px-4 py-2 text-xs text-muted-foreground text-center">
-        Chat with <span className="text-neon-violet">@{contact.username}</span> · #{String(contact.profileNumber).padStart(5, '0')}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-hidden border-x border-neon-violet/20 bg-background/50">
-        <MessageList
-          messages={messages}
-          myPrincipal={myPrincipal || ''}
-          isLoading={isLoading}
-          contactName={contact.displayName}
-          contactAvatar={avatarUrl}
-        />
-      </div>
+      <ScrollArea className="flex-1 py-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No messages yet. Say hello!</p>
+          </div>
+        ) : (
+          <div className="space-y-3 px-1">
+            {messages.map((msg: Message, i: number) => {
+              const isOwn = msg.senderUsername === username;
+              return (
+                <div
+                  key={i}
+                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm ${
+                      isOwn
+                        ? 'bg-primary text-primary-foreground rounded-br-sm'
+                        : 'bg-card border border-border text-foreground rounded-bl-sm'
+                    }`}
+                  >
+                    <p>{msg.content}</p>
+                    <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                      {new Date(Number(msg.timestamp) / 1_000_000).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={bottomRef} />
+          </div>
+        )}
+      </ScrollArea>
 
-      {/* Input */}
-      <div className="card-dark rounded-b-2xl border border-neon-violet/20 border-t-0">
-        <MessageInput
-          onSendMessage={async (text) => {
-            toast.info('Direct messaging requires principal ID lookup. Feature coming soon.');
-          }}
-          onSendPhoto={async (file) => {
-            try {
-              const bytes = new Uint8Array(await file.arrayBuffer());
-              const blob = ExternalBlob.fromBytes(bytes);
-              await sharePhoto.mutateAsync(blob);
-              toast.success('Photo shared!');
-            } catch {
-              toast.error('Failed to share photo');
-            }
-          }}
-          onSendVideo={async (file) => {
-            try {
-              const bytes = new Uint8Array(await file.arrayBuffer());
-              const blob = ExternalBlob.fromBytes(bytes);
-              await shareVideo.mutateAsync(blob);
-              toast.success('Video shared!');
-            } catch {
-              toast.error('Failed to share video');
-            }
-          }}
-          isSending={sendMessage.isPending}
+      {/* Message input */}
+      <div className="flex items-center gap-3 pt-4 border-t border-border">
+        <Input
+          placeholder="Type a message…"
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={sendMessage.isPending}
+          className="flex-1"
         />
+        <Button
+          size="icon"
+          onClick={handleSend}
+          disabled={sendMessage.isPending || !messageText.trim()}
+        >
+          {sendMessage.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
+        </Button>
       </div>
     </div>
   );

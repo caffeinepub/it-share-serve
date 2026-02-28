@@ -1,139 +1,242 @@
 import { useState } from 'react';
-import { useRegister } from '../hooks/useQueries';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useQueryClient } from '@tanstack/react-query';
-import { User, AtSign, FileText, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
+import { useNavigate } from '@tanstack/react-router';
+import { useAuth } from '../hooks/useAuth';
+import { useRegisterUser, useLoginUser } from '../hooks/useQueries';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterPage() {
-  const [username, setUsername] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('');
-  const { mutateAsync: register, isPending } = useRegister();
-  const { clear } = useInternetIdentity();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const registerMutation = useRegisterUser();
+  const loginMutation = useLoginUser();
+
+  const [form, setForm] = useState({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    displayName: '',
+    bio: '',
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const updateField = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => { const e = { ...prev }; delete e[field]; return e; });
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.username.trim()) newErrors.username = 'Username is required';
+    else if (form.username.trim().length < 3) newErrors.username = 'Username must be at least 3 characters';
+    if (!form.password) newErrors.password = 'Password is required';
+    else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (!form.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
+    else if (form.password !== form.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!form.displayName.trim()) newErrors.displayName = 'Display name is required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !displayName.trim()) {
-      toast.error('Username and display name are required');
-      return;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      toast.error('Username can only contain letters, numbers, and underscores');
-      return;
-    }
+    if (!validate()) return;
+
     try {
-      await register({ username: username.trim(), displayName: displayName.trim(), avatarUrl: '', bio: bio.trim() });
-      toast.success('Account created! Welcome to ShareServe 🚀');
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Registration failed';
-      toast.error(msg);
+      await registerMutation.mutateAsync({
+        username: form.username.trim(),
+        password: form.password,
+        displayName: form.displayName.trim(),
+        bio: form.bio.trim(),
+      });
+
+      // Auto-login after registration
+      const loggedInUsername = await loginMutation.mutateAsync({
+        username: form.username.trim(),
+        password: form.password,
+      });
+      login(loggedInUsername);
+      navigate({ to: '/' });
+    } catch (err: any) {
+      const msg: string = err.message || '';
+      if (msg.toLowerCase().includes('username already taken') || msg.toLowerCase().includes('already taken')) {
+        setErrors({ username: 'This username is already taken. Please choose another.' });
+      } else {
+        setErrors({ general: msg || 'Registration failed. Please try again.' });
+      }
     }
   };
 
-  const handleLogout = async () => {
-    await clear();
-    queryClient.clear();
-  };
+  const isPending = registerMutation.isPending || loginMutation.isPending;
 
   return (
-    <div className="min-h-screen bg-background bg-grid-pattern flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-1/3 left-1/3 w-80 h-80 rounded-full opacity-10 blur-3xl" style={{ background: 'oklch(0.72 0.25 290)' }} />
-      <div className="absolute bottom-1/3 right-1/3 w-80 h-80 rounded-full opacity-10 blur-3xl" style={{ background: 'oklch(0.75 0.2 195)' }} />
-
-      <div className="w-full max-w-md animate-fade-up">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <img src="/assets/generated/shareserve-logo.dim_256x256.png" alt="ShareServe" className="w-16 h-16 animate-float" />
-          </div>
-          <h1 className="font-orbitron text-3xl font-bold animate-shimmer mb-1">CREATE ACCOUNT</h1>
-          <p className="text-muted-foreground text-sm">Set up your ShareServe profile</p>
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <img src="/assets/generated/shareserve-logo.dim_256x256.png" alt="ShareServer" className="w-20 h-20 mb-4 rounded-2xl" />
+          <h1 className="text-3xl font-bold text-primary tracking-tight">ShareServer</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Connect, share, and communicate</p>
         </div>
 
-        <div className="card-glow rounded-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-xs font-medium text-neon-violet mb-1.5 uppercase tracking-wider">
-                Username *
-              </label>
-              <div className="relative">
-                <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  placeholder="your_username"
-                  className="input-neon w-full rounded-xl pl-10 pr-4 py-3 text-sm"
-                  maxLength={30}
-                  required
-                />
+        {/* Card */}
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
+          <h2 className="text-xl font-semibold text-foreground mb-6">Create your account</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* General error */}
+            {errors.general && (
+              <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">
+                {errors.general}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Letters, numbers, underscores only</p>
+            )}
+
+            {/* Username */}
+            <div className="space-y-1.5">
+              <Label htmlFor="username" className="text-foreground">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Choose a username"
+                value={form.username}
+                onChange={(e) => updateField('username', e.target.value)}
+                className={errors.username ? 'border-destructive focus-visible:ring-destructive' : ''}
+                autoComplete="username"
+                disabled={isPending}
+              />
+              {errors.username && <p className="text-destructive text-xs">{errors.username}</p>}
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-neon-cyan mb-1.5 uppercase tracking-wider">
-                Display Name *
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  placeholder="Your Name"
-                  className="input-neon w-full rounded-xl pl-10 pr-4 py-3 text-sm"
-                  maxLength={50}
-                  required
-                />
-              </div>
+            {/* Display Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="displayName" className="text-foreground">Display Name</Label>
+              <Input
+                id="displayName"
+                type="text"
+                placeholder="Your full name or nickname"
+                value={form.displayName}
+                onChange={(e) => updateField('displayName', e.target.value)}
+                className={errors.displayName ? 'border-destructive focus-visible:ring-destructive' : ''}
+                autoComplete="name"
+                disabled={isPending}
+              />
+              {errors.displayName && <p className="text-destructive text-xs">{errors.displayName}</p>}
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-neon-pink mb-1.5 uppercase tracking-wider">
-                Bio
-              </label>
+            {/* Password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <div className="relative">
-                <FileText className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                <textarea
-                  value={bio}
-                  onChange={e => setBio(e.target.value)}
-                  placeholder="Tell the world about yourself..."
-                  className="input-neon w-full rounded-xl pl-10 pr-4 py-3 text-sm resize-none"
-                  rows={3}
-                  maxLength={200}
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a password"
+                  value={form.password}
+                  onChange={(e) => updateField('password', e.target.value)}
+                  className={`pr-10 ${errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  autoComplete="new-password"
+                  disabled={isPending}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
+              {errors.password && <p className="text-destructive text-xs">{errors.password}</p>}
             </div>
 
-            <button
+            {/* Confirm Password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirm ? 'text' : 'password'}
+                  placeholder="Repeat your password"
+                  value={form.confirmPassword}
+                  onChange={(e) => updateField('confirmPassword', e.target.value)}
+                  className={`pr-10 ${errors.confirmPassword ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  autoComplete="new-password"
+                  disabled={isPending}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="text-destructive text-xs">{errors.confirmPassword}</p>}
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-1.5">
+              <Label htmlFor="bio" className="text-foreground">
+                Bio <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Textarea
+                id="bio"
+                placeholder="Tell us a little about yourself…"
+                value={form.bio}
+                onChange={(e) => updateField('bio', e.target.value)}
+                rows={3}
+                disabled={isPending}
+                className="resize-none"
+              />
+            </div>
+
+            {/* Submit */}
+            <Button
               type="submit"
+              className="w-full mt-2"
               disabled={isPending}
-              className="w-full btn-neon-violet rounded-xl py-3 px-6 font-orbitron font-semibold text-sm tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
             >
               {isPending ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating Account...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating account…
                 </>
               ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Create Account
-                </>
+                'Create Account'
               )}
-            </button>
+            </Button>
           </form>
 
-          <button
-            onClick={handleLogout}
-            className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
-          >
-            Sign out and use a different identity
-          </button>
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Already have an account?{' '}
+            <a
+              href="/login"
+              onClick={(e) => { e.preventDefault(); navigate({ to: '/login' }); }}
+              className="text-primary hover:underline font-medium"
+            >
+              Sign in
+            </a>
+          </p>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Built with ❤️ using{' '}
+          <a
+            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            caffeine.ai
+          </a>
+        </p>
       </div>
     </div>
   );

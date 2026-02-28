@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
-import { Link, useRouter } from '@tanstack/react-router';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetCallerUserProfile } from '../hooks/useQueries';
+import { useNavigate, useLocation } from '@tanstack/react-router';
+import { useAuth } from '../hooks/useAuth';
+import { useGetUserProfile } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
-import { Home, Users, MessageCircle, Sparkles, User, LogOut, Menu, X } from 'lucide-react';
-import { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Home, Users, MessageSquare, User, PlusSquare, LogOut, Search, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,188 +14,129 @@ interface LayoutProps {
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/contacts', label: 'Contacts', icon: Users },
-  { path: '/create', label: 'Create', icon: Sparkles },
+  { path: '/search', label: 'Search', icon: Search },
+  { path: '/create', label: 'Create', icon: PlusSquare },
   { path: '/profile', label: 'Profile', icon: User },
+  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Layout({ children }: LayoutProps) {
-  const { clear, identity } = useInternetIdentity();
-  const { data: userProfile } = useGetCallerUserProfile();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { username, logout } = useAuth();
   const queryClient = useQueryClient();
-  const router = useRouter();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: profile } = useGetUserProfile(username);
 
-  const currentPath = router.state.location.pathname;
-
-  const handleLogout = async () => {
-    await clear();
+  const handleLogout = () => {
+    logout();
     queryClient.clear();
+    navigate({ to: '/login' });
   };
 
-  const getAvatarUrl = () => {
-    if (userProfile?.profilePic) return userProfile.profilePic.getDirectURL();
-    if (userProfile?.avatarUrl) return userProfile.avatarUrl;
-    return '';
-  };
-
-  const getInitials = () => {
-    if (userProfile?.displayName) {
-      return userProfile.displayName.slice(0, 2).toUpperCase();
-    }
-    return 'SS';
-  };
+  const displayName = profile?.displayName || username || 'User';
+  const initials = displayName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-background bg-grid-pattern flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-neon-violet/20 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <img src="/assets/generated/shareserve-logo.dim_256x256.png" alt="ShareServe" className="w-8 h-8" />
-            <span className="font-orbitron font-bold text-lg gradient-text hidden sm:block">SHARESERVE</span>
-          </Link>
+      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/assets/generated/shareserve-logo.dim_256x256.png"
+              alt="ShareServer"
+              className="w-8 h-8 rounded-lg"
+            />
+            <span className="font-bold text-lg text-primary">ShareServer</span>
+          </div>
 
-          {/* Desktop Nav */}
+          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map(({ path, label, icon: Icon }) => {
-              const isActive = currentPath === path;
+              const isActive = location.pathname === path;
               return (
-                <Link
+                <button
                   key={path}
-                  to={path}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  onClick={() => navigate({ to: path })}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-neon-violet/10 text-neon-violet text-glow-violet border border-neon-violet/30'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
                   {label}
-                </Link>
+                </button>
               );
             })}
           </nav>
 
-          {/* User Menu */}
+          {/* User area */}
           <div className="flex items-center gap-3">
-            {userProfile && (
-              <div className="hidden sm:flex items-center gap-2">
-                <Avatar className="w-8 h-8 border border-neon-violet/30">
-                  <AvatarImage src={getAvatarUrl()} />
-                  <AvatarFallback className="bg-secondary text-xs font-orbitron text-neon-violet">
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden lg:block">
-                  <p className="text-xs font-medium text-foreground">{userProfile.displayName}</p>
-                  <p className="text-xs text-muted-foreground">#{String(userProfile.profileNumber).padStart(5, '0')}</p>
-                </div>
-              </div>
-            )}
-            <button
+            <div className="hidden sm:flex items-center gap-2">
+              <Avatar className="w-8 h-8">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-foreground">{displayName}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleLogout}
-              className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors px-3 py-2 rounded-lg hover:bg-destructive/10"
+              title="Log out"
+              className="text-muted-foreground hover:text-destructive"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
-
-            {/* Mobile menu toggle */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-
-        {/* Mobile Nav */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl px-4 py-3 space-y-1">
-            {navItems.map(({ path, label, icon: Icon }) => {
-              const isActive = currentPath === path;
-              return (
-                <Link
-                  key={path}
-                  to={path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-neon-violet/10 text-neon-violet border border-neon-violet/30'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {label}
-                </Link>
-              );
-            })}
-            {userProfile && (
-              <div className="flex items-center gap-3 px-4 py-3 border-t border-border mt-2 pt-3">
-                <Avatar className="w-8 h-8 border border-neon-violet/30">
-                  <AvatarImage src={getAvatarUrl()} />
-                  <AvatarFallback className="bg-secondary text-xs font-orbitron text-neon-violet">
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{userProfile.displayName}</p>
-                  <p className="text-xs text-muted-foreground">#{String(userProfile.profileNumber).padStart(5, '0')}</p>
-                </div>
-                <button onClick={handleLogout} className="ml-auto text-muted-foreground hover:text-destructive">
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </header>
 
-      {/* Bottom Nav (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-neon-violet/20 bg-background/90 backdrop-blur-xl">
-        <div className="flex items-center justify-around px-2 py-2">
+      {/* Main content */}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6 pb-24 md:pb-6">
+        {children}
+      </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/90 backdrop-blur-md border-t border-border z-50">
+        <div className="flex items-center justify-around h-16 px-1">
           {navItems.map(({ path, label, icon: Icon }) => {
-            const isActive = currentPath === path;
+            const isActive = location.pathname === path;
             return (
-              <Link
+              <button
                 key={path}
-                to={path}
-                className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all ${
-                  isActive ? 'text-neon-violet' : 'text-muted-foreground'
+                onClick={() => navigate({ to: path })}
+                className={`flex flex-col items-center gap-0.5 px-1 py-2 rounded-lg transition-colors ${
+                  isActive ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-glow-violet' : ''}`} />
-                <span className="text-[10px] font-medium">{label}</span>
-              </Link>
+                <Icon className="w-5 h-5" />
+                <span className="text-[9px]">{label}</span>
+              </button>
             );
           })}
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24 md:pb-6">
-        {children}
-      </main>
-
       {/* Footer */}
-      <footer className="hidden md:block border-t border-border bg-background/50 py-4 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} ShareServe. All rights reserved.</span>
-          <span className="flex items-center gap-1">
-            Built with{' '}
-            <span className="text-neon-pink">♥</span>{' '}
-            using{' '}
-            <a
-              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'shareserve')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-neon-violet hover:text-neon-cyan transition-colors"
-            >
-              caffeine.ai
-            </a>
-          </span>
+      <footer className="hidden md:block bg-card border-t border-border py-4 mb-0">
+        <div className="max-w-6xl mx-auto px-4 text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} ShareServer. Built with ❤️ using{' '}
+          <a
+            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline text-primary"
+          >
+            caffeine.ai
+          </a>
         </div>
       </footer>
     </div>

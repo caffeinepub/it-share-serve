@@ -2,14 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-implement-in-app-messaging-between-registered-users-users-can-send-and-receive-text-messages-in-one-on-one-chat-threads-messages-are-stored-in-the-backend-and-retrieved-per-conversation-messaging-only-works-between-accounts-within-the-app-no-external-sms-or-phone-network-integration",
-      "featureTitle": "Implement in-app messaging between registered users: users can send and receive text messages in one-on-one chat threads. Messages are stored in the backend and retrieved per conversation. Messaging only works between accounts within the app — no external SMS or phone network integration.",
+      "featureId": "feature-fix-the-layout-of-the-imagegenerator-component-so-that-generated-images-are-always-visible-replace-any-broken-or-question-mark-producing-image-sources-use-multiple-public-image-platforms-as-sources-e-g-unsplash-picsum-pexels-so-that-if-one-platform-fails-to-load-the-component-falls-back-to-another-the-generated-image-must-always-render-visibly-in-the-ui-no-broken-image-icons-or-question-mark-placeholders",
+      "featureTitle": "Fix the layout of the ImageGenerator component so that generated images are always visible. Replace any broken or question-mark-producing image sources. Use multiple public image platforms as sources (e.g., Unsplash, Picsum, Pexels) so that if one platform fails to load, the component falls back to another. The generated image must always render visibly in the UI — no broken image icons or question mark placeholders.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/MessageInput.tsx",
-        "frontend/src/components/MessageList.tsx",
-        "frontend/src/pages/ChatPage.tsx",
-        "frontend/src/pages/ContactsPage.tsx"
+        "frontend/src/components/ImageGenerator.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -21,18 +17,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-27"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-photo-sharing-in-chats-and-on-a-user-profile-feed-users-can-upload-photos-stored-as-base64-or-asset-url-in-the-backend-share-them-in-messages-and-view-shared-photos-in-a-gallery-style-feed",
-      "featureTitle": "Implement photo sharing in chats and on a user profile feed: users can upload photos (stored as base64 or asset URL in the backend), share them in messages, and view shared photos in a gallery-style feed.",
+      "featureId": "feature-fix-the-layout-of-the-videogenerator-component-so-that-generated-videos-always-render-visibly-inline-replace-all-youtube-based-video-sources-with-direct-mp4-urls-from-at-least-two-alternative-platforms-e-g-mixkit-and-pexels-videos-free-tier-direct-mp4-links-or-coverr-and-pixabay-the-generated-video-must-display-as-a-playable-video-element-immediately-after-generation-no-question-mark-placeholders-or-broken-media-icons",
+      "featureTitle": "Fix the layout of the VideoGenerator component so that generated videos always render visibly inline. Replace all YouTube-based video sources with direct MP4 URLs from at least two alternative platforms (e.g., Mixkit and Pexels Videos free-tier direct MP4 links, or Coverr and Pixabay). The generated video must display as a playable <video> element immediately after generation — no question mark placeholders or broken media icons.",
       "files": [
-        "frontend/src/components/MessageInput.tsx",
-        "frontend/src/components/PhotoGallery.tsx",
-        "frontend/src/components/PhotoUploader.tsx",
-        "frontend/src/pages/ProfilePage.tsx"
+        "frontend/src/components/VideoGenerator.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -44,18 +37,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-28"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-video-sharing-in-chats-and-on-a-user-profile-feed-users-can-upload-short-videos-share-them-in-messages-and-play-them-inline-within-the-chat-or-feed-view",
-      "featureTitle": "Implement video sharing in chats and on a user profile feed: users can upload short videos, share them in messages, and play them inline within the chat or feed view.",
+      "featureId": "feature-fix-the-layout-of-the-photogallery-component-so-that-all-photos-uploaded-to-profile-feed-or-shared-in-chats-render-visibly-replace-any-single-source-image-url-construction-with-a-multi-platform-fallback-approach-attempt-to-load-from-the-stored-source-first-then-fall-back-to-a-secondary-public-image-platform-e-g-picsum-photos-if-the-primary-fails-ensure-the-grid-and-lightbox-views-both-display-images-correctly-with-no-broken-image-icons-or-question-marks",
+      "featureTitle": "Fix the layout of the PhotoGallery component so that all photos (uploaded to profile feed or shared in chats) render visibly. Replace any single-source image URL construction with a multi-platform fallback approach — attempt to load from the stored source first, then fall back to a secondary public image platform (e.g., Picsum Photos) if the primary fails. Ensure the grid and lightbox views both display images correctly with no broken image icons or question marks.",
       "files": [
-        "frontend/src/components/MessageInput.tsx",
-        "frontend/src/components/VideoGallery.tsx",
-        "frontend/src/components/VideoUploader.tsx",
-        "frontend/src/pages/ProfilePage.tsx"
+        "frontend/src/components/PhotoGallery.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -67,17 +57,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-5"
+        "REQ-29"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-an-ai-image-generation-feature-accessible-from-a-dedicated-create-tab-users-enter-a-text-prompt-and-receive-a-generated-image-they-can-save-to-their-profile-or-share-in-a-chat-generation-follows-standard-content-policies",
-      "featureTitle": "Add an AI image generation feature accessible from a dedicated 'Create' tab: users enter a text prompt and receive a generated image they can save to their profile or share in a chat. Generation follows standard content policies.",
+      "featureId": "feature-fix-the-layout-of-the-videogallery-component-so-that-all-videos-uploaded-to-profile-feed-or-shared-in-chats-render-visibly-as-inline-playable-video-elements-remove-any-youtube-based-source-urls-use-direct-mp4-url-sources-from-at-least-two-alternative-platforms-mixkit-pexels-coverr-or-pixabay-as-fallback-sources-ensure-no-broken-video-icons-or-question-mark-placeholders-appear-in-the-grid-view-or-in-chat-messages",
+      "featureTitle": "Fix the layout of the VideoGallery component so that all videos (uploaded to profile feed or shared in chats) render visibly as inline playable <video> elements. Remove any YouTube-based source URLs. Use direct MP4 URL sources from at least two alternative platforms (Mixkit, Pexels, Coverr, or Pixabay) as fallback sources. Ensure no broken video icons or question mark placeholders appear in the grid view or in chat messages.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/ImageGenerator.tsx",
-        "frontend/src/pages/CreatePage.tsx"
+        "frontend/src/components/VideoGallery.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -89,16 +77,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-30"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-an-ai-video-generation-feature-on-the-same-create-tab-users-enter-a-text-prompt-or-description-and-receive-a-generated-short-video-clip-they-can-save-or-share-generation-follows-standard-content-policies",
-      "featureTitle": "Add an AI video generation feature on the same 'Create' tab: users enter a text prompt or description and receive a generated short video clip they can save or share. Generation follows standard content policies.",
+      "featureId": "feature-fix-the-layout-of-the-searchpage-photo-and-video-tabs-so-that-search-results-display-visibly-for-photo-search-use-multiple-image-source-platforms-e-g-unsplash-source-urls-and-picsum-as-fallback-so-results-always-load-for-video-search-replace-any-youtube-based-embed-or-search-results-with-direct-mp4-sources-from-two-alternative-platforms-e-g-pexels-videos-api-free-tier-and-mixkit-ensure-all-search-result-thumbnails-and-videos-render-without-broken-icons-or-question-mark-placeholders",
+      "featureTitle": "Fix the layout of the SearchPage photo and video tabs so that search results display visibly. For photo search, use multiple image source platforms (e.g., Unsplash source URLs and Picsum as fallback) so results always load. For video search, replace any YouTube-based embed or search results with direct MP4 sources from two alternative platforms (e.g., Pexels Videos API free tier and Mixkit). Ensure all search result thumbnails and videos render without broken icons or question mark placeholders.",
       "files": [
-        "frontend/src/components/VideoGenerator.tsx",
-        "frontend/src/pages/CreatePage.tsx"
+        "frontend/src/pages/SearchPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -110,74 +97,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-7"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-build-the-full-frontend-ui-with-a-dark-theme-deep-dark-backgrounds-near-black-vibrant-neon-accent-colors-e-g-electric-violet-cyan-hot-pink-glowing-ui-elements-animated-text-effects-shimmer-glow-typewriter-gradient-highlights-and-a-sleek-futuristic-layout-apply-the-theme-consistently-across-all-screens",
-      "featureTitle": "Build the full frontend UI with a dark theme: deep dark backgrounds (near-black), vibrant neon accent colors (e.g., electric violet, cyan, hot pink), glowing UI elements, animated text effects (shimmer, glow, typewriter), gradient highlights, and a sleek futuristic layout. Apply the theme consistently across all screens.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/AnimatedHeading.tsx",
-        "frontend/src/components/Layout.tsx",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-8"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-video-facts-section-or-widget-on-the-home-discovery-screen-display-a-rotating-carousel-of-short-informational-video-cards-covering-interesting-topics-space-science-history-etc-videos-are-static-placeholder-clips-with-overlay-text-facts",
-      "featureTitle": "Add a 'Video Facts' section or widget on the home/discovery screen: display a rotating carousel of short informational video cards covering interesting topics (space, science, history, etc.). Videos are static placeholder clips with overlay text facts.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/VideoFactsCarousel.tsx",
-        "frontend/src/pages/HomePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-9"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-build-a-user-profile-screen-showing-profile-number-avatar-display-name-username-bio-post-photo-video-gallery-and-a-button-to-edit-profile-details",
-      "featureTitle": "Build a user profile screen showing: profile number, avatar, display name, username, bio, post/photo/video gallery, and a button to edit profile details.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/pages/ProfilePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-10"
+        "REQ-31"
       ],
       "confidence": "high"
     }

@@ -1,84 +1,51 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T18:53:13.496Z",
-  "summary": "The diff implements a fairly comprehensive ShareServe app covering most requirements. The backend handles user profiles, contacts, messaging, photo/video sharing. The frontend covers login/register, contacts, chat, profile, create tab with AI image and video generation (simulated), video facts carousel, and a dark neon theme. However, several acceptance criteria have partial or notable implementation gaps, particularly around contacts (principal ID handling is broken/incomplete), chat messaging (conversation retrieval is broken due to principal routing limitation), and the share-in-chat feature for generated AI content.",
+  "generatedAt": "2026-02-28T19:57:50.076Z",
+  "summary": "The diff modifies 5 key frontend components (ImageGenerator, PhotoGallery, VideoGallery, VideoGenerator, SearchPage) plus supporting files. All five REQs are substantially addressed: multi-platform fallback image sources, YouTube-free MP4 video sources, inline <video> elements, and fallback chains. However, some acceptance criteria have gaps, particularly around using truly distinct platforms (Unsplash vs Picsum) for REQ-27 and REQ-31, and around chat message rendering for REQ-29 and REQ-30.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Contact requests can be sent, accepted, or declined; accepted contacts appear in the contacts list.",
-      "reason": "The ContactsPage explicitly acknowledges it cannot retrieve principal IDs from UserProfile, causing handleAccept to always show an error and handleSendRequest to show a placeholder toast. The contacts system is functionally broken at the frontend level.",
-      "evidence": [
-        "frontend/src/pages/ContactsPage.tsx"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "A user can open a chat with a contact and send text messages; messages are stored and retrievable from the backend.",
-      "reason": "ChatPage calls useGetConversation(undefined) passing undefined for the contact principal, meaning conversation retrieval is always empty and non-functional. The page comments acknowledge the principal routing limitation so messages cannot actually be sent to or retrieved for a specific contact.",
-      "evidence": [
-        "frontend/src/pages/ChatPage.tsx"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "requirement": "Generated images can be saved or shared in a chat.",
-      "reason": "ImageGenerator only supports saving to profile and downloading. There is no UI or flow to share a generated image directly into a chat conversation.",
+      "id": "REQ-27",
+      "requirement": "Image sources are drawn from at least two different public platforms (e.g., Unsplash and Picsum/Pexels)",
+      "reason": "The ImageGenerator buildImageUrls function uses only Picsum Photos for all three fallback URLs (seed variant 1, seed variant 2, and random). No second platform such as Unsplash or Pexels is used.",
       "evidence": [
         "frontend/src/components/ImageGenerator.tsx"
       ]
     },
     {
-      "id": "REQ-7",
-      "requirement": "A generated video clip can be previewed, saved, or shared in chat.",
-      "reason": "VideoGenerator supports saving to profile and downloading but does not provide a share-to-chat flow. Additionally the generated video is only a static thumbnail image rather than an actual video clip.",
+      "id": "REQ-29",
+      "requirement": "Photos shared in chat messages also render without broken icons",
+      "reason": "The diff only modifies PhotoGallery.tsx for grid/lightbox views. There is no evidence in the diff that chat message photo rendering was updated to use the same fallback approach.",
       "evidence": [
-        "frontend/src/components/VideoGenerator.tsx"
+        "frontend/src/components/PhotoGallery.tsx"
       ]
-    }
-  ],
-  "hallucinated_features": [
+    },
     {
-      "description": "Phone and Video call buttons in the chat header UI",
-      "reason": "The build request explicitly lists video calling as a non-goal and has no requirement for phone call UI. The ChatPage renders Phone and Video icon buttons in the chat header.",
+      "id": "REQ-30",
+      "requirement": "Videos shared in chat messages render and play inline without broken icons",
+      "reason": "The diff only modifies VideoGallery.tsx for the grid view. There is no evidence in the diff that chat message video rendering was updated to use inline <video> elements with fallback MP4 sources.",
       "evidence": [
-        "frontend/src/pages/ChatPage.tsx"
+        "frontend/src/components/VideoGallery.tsx"
+      ]
+    },
+    {
+      "id": "REQ-31",
+      "requirement": "Photo search uses at least two image source platforms with fallback behavior",
+      "reason": "The SearchPage buildPhotoResults function uses only Picsum Photos for both the primary and fallback URLs (two different seeds, same platform). The requirement specifies using at least two different platforms such as Unsplash and Picsum.",
+      "evidence": [
+        "frontend/src/pages/SearchPage.tsx"
       ]
     }
   ],
-  "confidence": 0.8,
+  "hallucinated_features": [],
+  "confidence": 0.72,
   "changed_files": [
-    "all_files_summary.json",
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.css",
-    "frontend/index.html",
-    "frontend/src/App.tsx",
-    "frontend/src/components/AnimatedHeading.tsx",
     "frontend/src/components/ImageGenerator.tsx",
-    "frontend/src/components/Layout.tsx",
-    "frontend/src/components/MessageInput.tsx",
-    "frontend/src/components/MessageList.tsx",
     "frontend/src/components/PhotoGallery.tsx",
-    "frontend/src/components/PhotoUploader.tsx",
-    "frontend/src/components/VideoFactsCarousel.tsx",
     "frontend/src/components/VideoGallery.tsx",
     "frontend/src/components/VideoGenerator.tsx",
-    "frontend/src/components/VideoUploader.tsx",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/index.css",
-    "frontend/src/main.tsx",
-    "frontend/src/pages/ChatPage.tsx",
-    "frontend/src/pages/ContactsPage.tsx",
-    "frontend/src/pages/CreatePage.tsx",
-    "frontend/src/pages/HomePage.tsx",
-    "frontend/src/pages/LoginPage.tsx",
-    "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/pages/RegisterPage.tsx",
-    "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
+    "frontend/src/pages/SearchPage.tsx",
     "project_state.json"
   ]
 }

@@ -1,23 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Build ShareServe, a full-stack in-app instant messaging platform with photo/video sharing, AI image and video generation, a discovery feed, and a futuristic dark neon UI.
+**Goal:** Fix broken media display across all media components by replacing failing image/video sources with reliable multi-platform alternatives and removing all YouTube dependencies.
 
 **Planned changes:**
+- Fix ImageGenerator component to display generated images visibly using multiple public image platforms (e.g., Unsplash, Picsum, Pexels) with fallback behavior if one source fails
+- Fix VideoGenerator component to render videos as inline playable `<video>` elements using direct MP4 URLs from at least two alternative platforms (e.g., Mixkit, Pexels Videos), removing all YouTube URLs
+- Fix PhotoGallery component (grid and lightbox views) to render all photos visibly using a multi-platform fallback approach (primary source with fallback to e.g., Picsum)
+- Fix VideoGallery component to render all videos as inline playable `<video>` elements using direct MP4 sources from at least two alternative platforms, removing all YouTube URLs
+- Fix SearchPage photo tab to display image search results using multiple image platforms with fallback behavior
+- Fix SearchPage video tab to display video search results as inline `<video>` elements using two alternative non-YouTube platforms (e.g., Pexels API and Mixkit)
 
-**Backend (Motoko, single actor):**
-- User registration with unique username, auto-generated profile number (e.g., #00123), display name, avatar URL, and bio; login via Internet Identity
-- Contacts system: search by username or profile number, send/accept/decline contact requests, view contacts list
-- One-on-one chat threads: store and retrieve text messages per conversation
-- Photo and video storage (base64 or asset URL) attached to messages and user profile feed
-
-**Frontend:**
-- Auth flow: Internet Identity login/registration screen
-- Home/Discovery screen with a "Video Facts" section showing a horizontal carousel of at least 3 fact cards (cosmic/space background video with overlaid text facts)
-- Contacts tab: search users, manage contact requests, view contacts list
-- Chat tab: list of conversations, one-on-one chat view with text messaging, inline photo and video attachments
-- Create tab: AI image generation (text prompt → generated image, save or share) and AI video generation (text prompt → generated clip, preview, save or share), visually distinct sections on the same tab
-- Profile screen: profile number, avatar, display name, username, bio, photo/video gallery, edit profile button
-- Dark futuristic theme throughout: near-black backgrounds, neon accents (electric violet, cyan, hot pink), glowing buttons/icons/headings, animated shimmer/glow text effects on key elements, gradient highlights
-
-**User-visible outcome:** Users can register and log in with Internet Identity, manage contacts, exchange text and media messages within the app, generate AI images and videos from prompts, browse a video facts discovery feed, and view/edit their profile — all within a polished dark neon futuristic interface.
+**User-visible outcome:** All images and videos throughout the app (generator, gallery, search, and chat) render visibly without broken icons or question mark placeholders, and all videos play inline without requiring YouTube.

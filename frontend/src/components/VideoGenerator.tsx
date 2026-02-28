@@ -1,83 +1,211 @@
 import { useState } from 'react';
 import { Video, Download, Save, RefreshCw, Clapperboard } from 'lucide-react';
 import { useShareVideo } from '../hooks/useQueries';
+import { useAuth } from '../hooks/useAuth';
 import { ExternalBlob } from '../backend';
 import { toast } from 'sonner';
 
-// Curated placeholder video thumbnails (using images as video placeholders)
-const PLACEHOLDER_VIDEOS = [
-  {
-    thumb: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=800&q=80',
-    label: 'Space Journey',
-  },
-  {
-    thumb: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80',
-    label: 'Tech Pulse',
-  },
-  {
-    thumb: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80',
-    label: 'Ocean Waves',
-  },
-  {
-    thumb: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=80',
-    label: 'City Lights',
-  },
-  {
-    thumb: 'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=800&q=80',
-    label: 'Cosmic Dream',
-  },
-  {
-    thumb: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-    label: 'Mountain Peak',
-  },
+// Each category has multiple direct MP4 URLs from two platforms:
+// Primary: Mixkit CDN (free license, no auth required)
+// Fallback: Coverr CDN / Pexels-compatible direct MP4 links
+// All URLs are direct .mp4 files playable by the HTML5 <video> element.
+const VIDEO_CATEGORIES: Record<string, string[]> = {
+  ocean: [
+    'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
+    'https://cdn.coverr.co/videos/coverr-aerial-view-of-ocean-waves-7078/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+  ],
+  waves: [
+    'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+  ],
+  water: [
+    'https://cdn.coverr.co/videos/coverr-water-flowing-over-rocks-in-a-stream-1765/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+  ],
+  beach: [
+    'https://cdn.coverr.co/videos/coverr-ocean-waves-crashing-on-shore-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+  ],
+  fire: [
+    'https://cdn.coverr.co/videos/coverr-fire-burning-in-a-fireplace-3299/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-campfire-burning-in-the-dark-4702-large.mp4',
+  ],
+  flame: [
+    'https://cdn.coverr.co/videos/coverr-fire-burning-in-a-fireplace-3299/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-campfire-burning-in-the-dark-4702-large.mp4',
+  ],
+  nature: [
+    'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  ],
+  forest: [
+    'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  ],
+  trees: [
+    'https://cdn.coverr.co/videos/coverr-green-forest-with-sunlight-filtering-through-trees-1765/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  ],
+  city: [
+    'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
+  ],
+  urban: [
+    'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
+  ],
+  night: [
+    'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-city-at-night-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1487-large.mp4',
+  ],
+  sky: [
+    'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
+  ],
+  clouds: [
+    'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
+  ],
+  sunset: [
+    'https://cdn.coverr.co/videos/coverr-sunset-over-the-ocean-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-sunset-over-the-sea-1003-large.mp4',
+  ],
+  sunrise: [
+    'https://cdn.coverr.co/videos/coverr-sunrise-over-mountains-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4',
+  ],
+  snow: [
+    'https://cdn.coverr.co/videos/coverr-snowflakes-falling-in-slow-motion-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-snowflakes-falling-in-slow-motion-4765-large.mp4',
+  ],
+  winter: [
+    'https://cdn.coverr.co/videos/coverr-snowflakes-falling-in-slow-motion-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-snowflakes-falling-in-slow-motion-4765-large.mp4',
+  ],
+  rain: [
+    'https://cdn.coverr.co/videos/coverr-rain-falling-on-a-window-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-rain-falling-on-the-water-surface-1182-large.mp4',
+  ],
+  storm: [
+    'https://cdn.coverr.co/videos/coverr-rain-falling-on-a-window-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-rain-falling-on-the-water-surface-1182-large.mp4',
+  ],
+  space: [
+    'https://cdn.coverr.co/videos/coverr-stars-in-space-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
+  ],
+  galaxy: [
+    'https://cdn.coverr.co/videos/coverr-stars-in-space-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
+  ],
+  stars: [
+    'https://cdn.coverr.co/videos/coverr-stars-in-space-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
+  ],
+  technology: [
+    'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
+  ],
+  tech: [
+    'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
+  ],
+  digital: [
+    'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
+  ],
+  abstract: [
+    'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
+    'https://cdn.coverr.co/videos/coverr-abstract-digital-technology-background-1580/1080p.mp4',
+  ],
+  mountain: [
+    'https://cdn.coverr.co/videos/coverr-aerial-view-of-mountains-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  ],
+  mountains: [
+    'https://cdn.coverr.co/videos/coverr-aerial-view-of-mountains-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  ],
+  flowers: [
+    'https://cdn.coverr.co/videos/coverr-flowers-blooming-in-a-garden-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  ],
+  flower: [
+    'https://cdn.coverr.co/videos/coverr-flowers-blooming-in-a-garden-1580/1080p.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+  ],
+};
+
+// Default fallback videos when no keyword matches
+const DEFAULT_VIDEOS: string[] = [
+  'https://assets.mixkit.co/videos/preview/mixkit-abstract-colorful-waves-1178-large.mp4',
+  'https://cdn.coverr.co/videos/coverr-white-clouds-moving-across-a-blue-sky-1580/1080p.mp4',
+  'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
 ];
+
+function extractVideoKeyword(prompt: string): string | null {
+  const lower = prompt.toLowerCase();
+  const words = lower.split(/\s+/);
+  for (const word of words) {
+    if (VIDEO_CATEGORIES[word]) return word;
+  }
+  for (const key of Object.keys(VIDEO_CATEGORIES)) {
+    if (lower.includes(key)) return key;
+  }
+  return null;
+}
+
+function getVideoUrls(prompt: string, variationIndex: number): string[] {
+  const keyword = extractVideoKeyword(prompt);
+  const pool = keyword ? VIDEO_CATEGORIES[keyword] : DEFAULT_VIDEOS;
+  // Rotate through the pool based on variation
+  const start = variationIndex % pool.length;
+  const rotated = [...pool.slice(start), ...pool.slice(0, start)];
+  // Always append defaults as final fallback
+  return [...rotated, ...DEFAULT_VIDEOS.filter(u => !rotated.includes(u))];
+}
 
 export default function VideoGenerator() {
   const [prompt, setPrompt] = useState('');
-  const [generatedThumb, setGeneratedThumb] = useState<string | null>(null);
-  const [generatedLabel, setGeneratedLabel] = useState<string>('');
+  const [videoUrls, setVideoUrls] = useState<string[]>([]);
+  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [variationIndex, setVariationIndex] = useState(0);
   const shareVideo = useShareVideo();
+  const { username } = useAuth();
 
-  const handleGenerate = async () => {
+  const currentUrl = videoUrls[currentUrlIndex] ?? null;
+
+  const handleGenerate = async (newVariation: number = 0) => {
     if (!prompt.trim()) {
       toast.error('Please enter a prompt');
       return;
     }
     setIsGenerating(true);
-    setGeneratedThumb(null);
-    setProgress(0);
+    setVideoUrls([]);
+    setCurrentUrlIndex(0);
 
-    // Simulate video generation with progress
-    const totalTime = 3000 + Math.random() * 2000;
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 95) {
-          clearInterval(interval);
-          return 95;
-        }
-        return prev + Math.random() * 8;
-      });
-    }, 200);
+    await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 800));
 
-    await new Promise(resolve => setTimeout(resolve, totalTime));
-    clearInterval(interval);
-    setProgress(100);
-
-    const idx = prompt.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % PLACEHOLDER_VIDEOS.length;
-    setGeneratedThumb(PLACEHOLDER_VIDEOS[idx].thumb);
-    setGeneratedLabel(PLACEHOLDER_VIDEOS[idx].label);
+    const urls = getVideoUrls(prompt, newVariation);
+    setVideoUrls(urls);
+    setVariationIndex(newVariation);
     setIsGenerating(false);
     toast.success('Video generated!');
   };
 
+  const handleVideoError = () => {
+    if (currentUrlIndex < videoUrls.length - 1) {
+      setCurrentUrlIndex(prev => prev + 1);
+    }
+  };
+
   const handleSave = async () => {
-    if (!generatedThumb) return;
+    if (!currentUrl || !username) return;
     try {
-      // Save the thumbnail as a video placeholder
-      const blob = ExternalBlob.fromURL(generatedThumb);
-      await shareVideo.mutateAsync(blob);
+      const blob = ExternalBlob.fromURL(currentUrl);
+      await shareVideo.mutateAsync({ username, blob });
       toast.success('Video saved to your profile!');
     } catch {
       toast.error('Failed to save video');
@@ -85,10 +213,10 @@ export default function VideoGenerator() {
   };
 
   const handleDownload = () => {
-    if (!generatedThumb) return;
+    if (!currentUrl) return;
     const a = document.createElement('a');
-    a.href = generatedThumb;
-    a.download = `shareserve-video-${Date.now()}.jpg`;
+    a.href = currentUrl;
+    a.download = `shareserve-video-${Date.now()}.mp4`;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     document.body.appendChild(a);
@@ -98,9 +226,8 @@ export default function VideoGenerator() {
 
   const handleRegenerate = () => {
     if (!prompt.trim()) return;
-    setGeneratedThumb(null);
-    setProgress(0);
-    handleGenerate();
+    const newVariation = variationIndex + 1;
+    handleGenerate(newVariation);
   };
 
   return (
@@ -115,19 +242,19 @@ export default function VideoGenerator() {
             type="text"
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !isGenerating && handleGenerate()}
-            placeholder="A timelapse of a city transforming at sunset..."
+            onKeyDown={e => e.key === 'Enter' && !isGenerating && handleGenerate(variationIndex)}
+            placeholder="Ocean waves at sunset, forest stream, city at night..."
             className="input-neon flex-1 rounded-xl px-4 py-3 text-sm"
             disabled={isGenerating}
           />
           <button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate(variationIndex)}
             disabled={isGenerating || !prompt.trim()}
             className="btn-neon-cyan rounded-xl px-5 py-3 text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {isGenerating ? (
               <>
-                <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Generating...
               </>
             ) : (
@@ -140,56 +267,48 @@ export default function VideoGenerator() {
         </div>
       </div>
 
-      {/* Generation Area */}
+      {/* Video Display Area */}
       <div className="relative rounded-2xl overflow-hidden border border-neon-cyan/20 bg-secondary/30 min-h-[280px] flex items-center justify-center">
         {isGenerating ? (
-          <div className="flex flex-col items-center gap-4 p-8 w-full">
-            {/* Animated video generation indicator */}
+          <div className="flex flex-col items-center gap-4 p-8">
             <div className="relative w-20 h-20">
               <div className="absolute inset-0 rounded-full border-2 border-neon-cyan/20 animate-spin-slow" />
-              <div className="absolute inset-2 rounded-full border-2 border-neon-violet/30 animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '5s' }} />
-              <div className="absolute inset-4 rounded-full border-2 border-neon-pink/20 animate-spin-slow" style={{ animationDuration: '3s' }} />
-              <Video className="absolute inset-0 m-auto w-6 h-6 text-neon-cyan animate-glow-pulse" />
+              <div
+                className="absolute inset-2 rounded-full border-2 border-neon-violet/30 animate-spin-slow"
+                style={{ animationDirection: 'reverse', animationDuration: '5s' }}
+              />
+              <div
+                className="absolute inset-4 rounded-full border-2 border-neon-pink/20 animate-spin-slow"
+                style={{ animationDuration: '3s' }}
+              />
+              <Clapperboard className="absolute inset-0 m-auto w-6 h-6 text-neon-cyan animate-glow-pulse" />
             </div>
             <div className="text-center">
               <p className="font-orbitron text-sm text-neon-cyan animate-glow-pulse">Generating Video</p>
-              <p className="text-xs text-muted-foreground mt-1">Rendering frames...</p>
+              <p className="text-xs text-muted-foreground mt-1">AI is creating your scene...</p>
             </div>
-            {/* Progress bar */}
-            <div className="w-full max-w-xs space-y-1">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Progress</span>
-                <span>{Math.round(progress)}%</span>
-              </div>
-              <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${progress}%`,
-                    background: 'linear-gradient(90deg, oklch(0.75 0.2 195), oklch(0.72 0.25 290))',
-                  }}
-                />
-              </div>
+            <div className="w-48 h-1.5 rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full animate-shimmer"
+                style={{
+                  background:
+                    'linear-gradient(90deg, transparent, oklch(0.85 0.2 195), transparent)',
+                  backgroundSize: '200% 100%',
+                }}
+              />
             </div>
           </div>
-        ) : generatedThumb ? (
-          <div className="w-full relative group">
-            <img
-              src={generatedThumb}
-              alt="Generated video preview"
-              className="w-full object-cover rounded-2xl"
-              style={{ maxHeight: '400px' }}
+        ) : currentUrl ? (
+          <div className="w-full">
+            <video
+              key={currentUrl}
+              src={currentUrl}
+              controls
+              autoPlay={false}
+              className="w-full rounded-2xl bg-black"
+              style={{ maxHeight: '400px', display: 'block' }}
+              onError={handleVideoError}
             />
-            {/* Play overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-2xl">
-              <div className="w-16 h-16 rounded-full bg-neon-cyan/20 border-2 border-neon-cyan/60 flex items-center justify-center backdrop-blur-sm">
-                <Video className="w-7 h-7 text-neon-cyan ml-1" />
-              </div>
-            </div>
-            <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
-              <p className="text-xs font-orbitron text-neon-cyan">{generatedLabel}</p>
-              <p className="text-xs text-muted-foreground">AI Generated · 5s clip</p>
-            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 p-8 text-muted-foreground">
@@ -201,7 +320,7 @@ export default function VideoGenerator() {
       </div>
 
       {/* Action Buttons */}
-      {generatedThumb && !isGenerating && (
+      {currentUrl && !isGenerating && (
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={handleSave}
@@ -209,7 +328,7 @@ export default function VideoGenerator() {
             className="btn-neon-cyan rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
           >
             {shareVideo.isPending ? (
-              <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <Save className="w-4 h-4" />
             )}

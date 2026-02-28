@@ -16,16 +16,15 @@ export class ExternalBlob {
 }
 export interface Message {
     content: string;
-    sender: Principal;
+    senderUsername: Username;
     timestamp: bigint;
 }
+export type Username = string;
 export interface UserProfile {
     bio: string;
-    username: string;
+    username: Username;
     profileNumber: bigint;
     displayName: string;
-    avatarUrl: string;
-    profilePic?: ExternalBlob;
 }
 export enum UserRole {
     admin = "admin",
@@ -33,30 +32,31 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
-    acceptContactRequest(requester: Principal): Promise<void>;
-    addPhotoToFeed(blob: ExternalBlob): Promise<void>;
-    addVideoToFeed(blob: ExternalBlob): Promise<void>;
+    acceptContactRequest(username: Username, requester: Username): Promise<void>;
+    addPhotoToFeed(username: Username, blob: ExternalBlob): Promise<void>;
+    addVideoToFeed(username: Username, blob: ExternalBlob): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    declineContactRequest(requester: Principal): Promise<void>;
+    declineContactRequest(username: Username, requester: Username): Promise<void>;
     findUserByProfileNumber(profileNumber: bigint): Promise<UserProfile>;
     findUsersByUsername(searchTerm: string): Promise<Array<UserProfile>>;
-    getCallerContacts(): Promise<Array<UserProfile>>;
-    getCallerUserProfile(): Promise<UserProfile>;
+    getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getConversation(partner: Principal): Promise<Array<Message>>;
-    getPendingContactRequests(): Promise<Array<UserProfile>>;
-    getUserPhotoFeed(user: Principal): Promise<Array<ExternalBlob>>;
-    getUserPhotos(user: Principal): Promise<Array<ExternalBlob>>;
-    getUserProfile(user: Principal): Promise<UserProfile>;
-    getUserVideoFeed(user: Principal): Promise<Array<ExternalBlob>>;
-    getUserVideos(user: Principal): Promise<Array<ExternalBlob>>;
+    getContacts(username: Username): Promise<Array<UserProfile>>;
+    getConversation(username: Username, partner: Username): Promise<Array<Message>>;
+    getPendingContactRequests(username: Username): Promise<Array<UserProfile>>;
+    getProfileByPrincipal(user: Principal): Promise<UserProfile | null>;
+    getUserPhotoFeed(username: Username): Promise<Array<ExternalBlob>>;
+    getUserPhotos(username: Username): Promise<Array<ExternalBlob>>;
+    getUserProfile(username: Username): Promise<UserProfile>;
+    getUserVideoFeed(username: Username): Promise<Array<ExternalBlob>>;
+    getUserVideos(username: Username): Promise<Array<ExternalBlob>>;
     isCallerAdmin(): Promise<boolean>;
-    register(username: string, displayName: string, avatarUrl: string, bio: string): Promise<void>;
+    loginUser(username: Username, password: string): Promise<boolean>;
+    registerUser(username: Username, password: string, displayName: string, bio: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    sendContactRequest(targetUser: Principal): Promise<void>;
-    sendMessage(receiver: Principal, text: string): Promise<void>;
-    sharePhoto(blob: ExternalBlob): Promise<void>;
-    shareVideo(blob: ExternalBlob): Promise<void>;
-    updateCallerUserProfile(displayName: string, avatarUrl: string, bio: string): Promise<void>;
-    uploadProfilePic(blob: ExternalBlob): Promise<void>;
+    sendContactRequest(sender: Username, targetUser: Username): Promise<void>;
+    sendMessage(sender: Username, receiver: Username, text: string): Promise<void>;
+    sharePhoto(username: Username, blob: ExternalBlob): Promise<void>;
+    shareVideo(username: Username, blob: ExternalBlob): Promise<void>;
+    updateUserProfile(username: Username, displayName: string, bio: string): Promise<void>;
 }

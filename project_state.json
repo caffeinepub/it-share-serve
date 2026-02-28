@@ -1,14 +1,23 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
-  "summary": "ShareServe is an instant messaging app with photo and video sharing, AI image and video generation, account creation with custom username/profile number, contacts system, dark theme UI, text effects, and visual polish. Messaging is between in-app accounts only. AI generation follows standard content policies.",
+  "projectStateVersion": 13,
+  "summary": "ShareServe is an instant messaging app with photo and video sharing, AI image and video generation, account creation with custom username/profile number, contacts system, dark theme UI, text effects, and visual polish. Messaging is between in-app accounts only. AI generation follows standard content policies. Authentication uses Apple or Google login instead of Internet Identity.",
   "architectural_notes": [
     "Messaging is in-app only; no external SMS or phone network integration",
-    "AI generation features must follow standard content policies — no unregulated generation"
+    "AI generation features must follow standard content policies — no unregulated generation",
+    "Authentication uses Apple or Google OAuth — Internet Identity is not used",
+    "Web photo/video search results are private — not displayed on user profile, feed, or any shared area",
+    "Do not use YouTube as a video source — use alternative platforms (e.g., Pexels, Mixkit, Coverr) for video playback"
   ],
-  "known_issues": [],
-  "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- ShareServe app logo — bold neon-outlined 'S' monogram with a glowing electric violet and cyan gradient on a near-black background, modern futuristic style (shareserve-logo.dim_256x256.png)\n- Dark abstract background texture with faint grid lines and subtle neon glow particles for use as a full-screen app background (app-bg.dim_1920x1080.png)\n- Video facts card placeholder background — blurred cosmic/space scene with deep blues and purples (video-facts-bg.dim_800x450.png)",
+  "known_issues": [
+    "Account registration is broken and needs to be fixed alongside the auth migration to Apple/Google login",
+    "AI generators (image and video) are not respecting user prompts — generating random unrelated content",
+    "Photos and videos are not displaying in the app (profile feed, chat, or search results)",
+    "AI video generator does not show generated videos inline — users cannot tap to watch without saving",
+    "Videos in search results or generator appear to be censored/restricted — user wants uncensored video content displayed",
+    "Videos and images show a question mark placeholder and are not rendering — layout needs to be fixed"
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
       "id": "feature-implement-in-app-messaging-between-registered-users-users-can-send-and-receive-text-messages-in-one-on-one-chat-threads-messages-are-stored-in-the-backend-and-retrieved-per-conversation-messaging-only-works-between-accounts-within-the-app-no-external-sms-or-phone-network-integration",
@@ -71,6 +80,166 @@
       "title": "Build a user profile screen showing: profile number, avatar, display name, username, bio, post/photo/video gallery, and a button to edit profile details.",
       "reqIds": [
         "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-internet-identity-authentication-with-a-username-and-password-based-registration-and-login-system-users-register-with-a-unique-username-password-display-name-and-optional-bio-credentials-are-stored-securely-in-the-backend-on-login-users-provide-their-username-and-password-to-authenticate-remove-all-internet-identity-dependencies-from-the-auth-flow",
+      "title": "Replace Internet Identity authentication with a username and password based registration and login system. Users register with a unique username, password, display name, and optional bio. Credentials are stored securely in the backend. On login, users provide their username and password to authenticate. Remove all Internet Identity dependencies from the auth flow.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-login-page-ui-to-display-a-username-and-password-form-instead-of-the-internet-identity-sign-in-button-the-form-should-include-fields-for-username-and-password-a-log-in-button-and-a-link-to-navigate-to-the-registration-screen-apply-the-existing-neon-dark-theme-consistently",
+      "title": "Update the login page UI to display a username and password form instead of the Internet Identity sign-in button. The form should include fields for username and password, a 'Log In' button, and a link to navigate to the registration screen. Apply the existing neon dark theme consistently.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-registration-page-ui-to-collect-username-password-confirm-password-display-name-and-optional-bio-on-successful-registration-automatically-log-the-user-in-and-redirect-to-the-home-screen-apply-the-existing-neon-dark-theme-consistently",
+      "title": "Update the registration page UI to collect username, password, confirm password, display name, and optional bio. On successful registration, automatically log the user in and redirect to the home screen. Apply the existing neon dark theme consistently.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-authgate-component-in-app-tsx-and-all-hooks-that-reference-internet-identity-useinternetidentity-useactor-so-that-the-app-s-route-protection-uses-the-new-username-password-session-state-instead-of-internet-identity-identity-authenticated-routes-should-only-be-accessible-when-the-user-has-a-valid-session",
+      "title": "Update the AuthGate component in App.tsx and all hooks that reference Internet Identity (useInternetIdentity, useActor) so that the app's route protection uses the new username/password session state instead of Internet Identity identity. Authenticated routes should only be accessible when the user has a valid session.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-ai-image-generator-so-that-the-generated-image-reflects-the-user-s-actual-text-prompt-currently-the-imagegenerator-component-ignores-the-prompt-and-returns-a-random-placeholder-image-update-the-logic-so-the-prompt-text-meaningfully-influences-the-image-selection-or-displayed-result-e-g-use-prompt-keywords-to-select-a-semantically-relevant-image-from-a-curated-set-or-a-prompt-aware-url-the-output-must-visually-correspond-to-what-the-user-typed",
+      "title": "Fix the AI image generator so that the generated image reflects the user's actual text prompt. Currently the ImageGenerator component ignores the prompt and returns a random placeholder image. Update the logic so the prompt text meaningfully influences the image selection or displayed result (e.g., use prompt keywords to select a semantically relevant image from a curated set or a prompt-aware URL). The output must visually correspond to what the user typed.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-ai-video-generator-so-that-the-generated-video-or-thumbnail-reflects-the-user-s-actual-text-prompt-currently-the-videogenerator-component-ignores-the-prompt-and-produces-random-placeholder-content-update-the-logic-so-the-prompt-text-meaningfully-influences-the-displayed-result-e-g-select-a-contextually-relevant-thumbnail-or-placeholder-clip-based-on-prompt-keywords-the-output-must-correspond-to-what-the-user-typed",
+      "title": "Fix the AI video generator so that the generated video or thumbnail reflects the user's actual text prompt. Currently the VideoGenerator component ignores the prompt and produces random placeholder content. Update the logic so the prompt text meaningfully influences the displayed result (e.g., select a contextually relevant thumbnail or placeholder clip based on prompt keywords). The output must correspond to what the user typed.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-in-app-web-photo-search-feature-place-it-in-a-new-search-tab-or-dedicated-section-accessible-from-the-main-navigation-users-can-type-a-search-query-and-see-a-grid-of-photo-results-fetched-from-a-public-image-search-api-e-g-unsplash-api-or-pexels-api-using-a-free-tier-key-results-must-be-displayed-privately-they-must-not-appear-on-the-user-s-profile-feed-or-be-visible-to-other-users-the-section-is-purely-for-personal-browsing-within-the-app",
+      "title": "Add an in-app web photo search feature. Place it in a new 'Search' tab or dedicated section accessible from the main navigation. Users can type a search query and see a grid of photo results fetched from a public image search API (e.g., Unsplash API or Pexels API using a free-tier key). Results must be displayed privately — they must NOT appear on the user's profile, feed, or be visible to other users. The section is purely for personal browsing within the app.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-in-app-video-search-feature-in-the-same-search-area-as-the-photo-search-e-g-a-tab-within-the-search-page-users-can-type-a-search-query-and-see-video-results-fetched-from-a-public-video-search-or-embed-source-e-g-using-youtube-data-api-v3-search-endpoint-or-a-similar-free-public-api-videos-must-be-playable-inline-within-the-app-results-must-be-displayed-privately-they-must-not-appear-on-the-user-s-profile-feed-or-be-visible-to-other-users",
+      "title": "Add an in-app video search feature in the same Search area as the photo search (e.g., a tab within the Search page). Users can type a search query and see video results fetched from a public video search or embed source (e.g., using YouTube Data API v3 search endpoint or a similar free public API). Videos must be playable inline within the app. Results must be displayed privately — they must NOT appear on the user's profile, feed, or be visible to other users.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-photos-not-displaying-anywhere-in-the-app-photos-uploaded-to-the-user-s-profile-feed-and-shared-in-chats-must-render-correctly-the-photogallery-component-must-properly-resolve-and-display-externalblob-image-data-base64-or-url-in-the-grid-and-lightbox-views-debug-and-correct-any-data-fetching-url-construction-or-rendering-issues-preventing-photos-from-appearing",
+      "title": "Fix photos not displaying anywhere in the app. Photos uploaded to the user's profile feed and shared in chats must render correctly. The PhotoGallery component must properly resolve and display ExternalBlob image data (base64 or URL) in the grid and lightbox views. Debug and correct any data-fetching, URL construction, or rendering issues preventing photos from appearing.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-videos-not-displaying-anywhere-in-the-app-videos-uploaded-to-the-user-s-profile-feed-and-shared-in-chats-must-render-correctly-the-videogallery-component-must-properly-resolve-and-display-externalblob-video-data-base64-or-url-debug-and-correct-any-data-fetching-url-construction-or-rendering-issues-preventing-videos-from-appearing-on-the-profile-feed-and-in-chat-messages",
+      "title": "Fix videos not displaying anywhere in the app. Videos uploaded to the user's profile feed and shared in chats must render correctly. The VideoGallery component must properly resolve and display ExternalBlob video data (base64 or URL). Debug and correct any data-fetching, URL construction, or rendering issues preventing videos from appearing on the profile feed and in chat messages.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-ai-videogenerator-component-so-that-generated-videos-or-their-prompt-aware-thumbnails-clips-can-be-tapped-and-watched-inline-within-the-create-page-without-requiring-the-user-to-save-or-download-them-first-display-the-generated-result-as-an-inline-playable-video-player-using-a-video-element-or-an-embedded-iframe-for-url-based-sources-directly-in-the-component-after-generation-completes-the-save-and-download-actions-should-remain-available-but-must-not-be-required-to-view-the-content",
+      "title": "Update the AI VideoGenerator component so that generated videos (or their prompt-aware thumbnails/clips) can be tapped and watched inline within the Create page — without requiring the user to save or download them first. Display the generated result as an inline playable video player (using a <video> element or an embedded iframe for URL-based sources) directly in the component after generation completes. The save and download actions should remain available but must not be required to view the content.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-settings-screen-accessible-from-the-main-navigation-e-g-a-settings-icon-in-the-layout-header-or-a-bottom-nav-entry-on-mobile-the-settings-screen-must-include-toggles-for-app-preferences-at-minimum-include-the-following-toggles-dark-mode-on-off-notifications-on-off-and-autoplay-videos-on-off-persist-toggle-state-to-localstorage-so-preferences-survive-page-refreshes-apply-the-existing-neon-dark-theme-consistently-to-the-settings-page",
+      "title": "Add a Settings screen accessible from the main navigation (e.g., a settings icon in the Layout header or a bottom nav entry on mobile). The Settings screen must include toggles for app preferences. At minimum include the following toggles: Dark Mode (on/off), Notifications (on/off), and Autoplay Videos (on/off). Persist toggle state to localStorage so preferences survive page refreshes. Apply the existing neon dark theme consistently to the Settings page.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rewrite-the-imagegenerator-component-so-that-the-generated-image-is-determined-by-the-user-s-actual-text-prompt-parse-the-prompt-for-meaningful-keywords-e-g-sunset-cat-city-space-forest-and-map-them-to-a-curated-set-of-high-quality-publicly-accessible-image-urls-e-g-via-unsplash-source-urls-with-explicit-topic-slugs-such-as-https-source-unsplash-com-800x600-keyword-the-displayed-image-must-visually-correspond-to-what-the-user-typed-remove-any-random-or-hash-based-selection-that-ignores-the-prompt-content",
+      "title": "Rewrite the ImageGenerator component so that the generated image is determined by the user's actual text prompt. Parse the prompt for meaningful keywords (e.g., 'sunset', 'cat', 'city', 'space', 'forest') and map them to a curated set of high-quality, publicly accessible image URLs (e.g., via Unsplash source URLs with explicit topic slugs such as `https://source.unsplash.com/800x600/?{keyword}`). The displayed image must visually correspond to what the user typed. Remove any random or hash-based selection that ignores the prompt content.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rewrite-the-videogenerator-component-so-that-the-generated-video-is-determined-by-the-user-s-actual-text-prompt-build-a-keyword-to-video-mapping-using-a-curated-set-of-freely-embeddable-publicly-accessible-non-restricted-video-urls-e-g-from-pexels-videos-free-api-or-direct-mp4-urls-from-public-sources-extract-meaningful-keywords-from-the-prompt-and-select-the-best-matching-video-the-selected-video-must-be-displayed-inline-as-a-playable-video-element-not-an-iframe-immediately-after-generation-completes-no-saving-or-downloading-required-to-watch-it-remove-all-random-or-hash-based-selection-logic-that-ignores-the-prompt",
+      "title": "Rewrite the VideoGenerator component so that the generated video is determined by the user's actual text prompt. Build a keyword-to-video mapping using a curated set of freely embeddable, publicly accessible, non-restricted video URLs (e.g., from Pexels Videos free API or direct MP4 URLs from public sources). Extract meaningful keywords from the prompt and select the best matching video. The selected video must be displayed inline as a playable `<video>` element (not an iframe) immediately after generation completes — no saving or downloading required to watch it. Remove all random or hash-based selection logic that ignores the prompt.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-any-currently-used-video-sources-in-the-videogenerator-component-that-produce-blocked-censored-or-unplayable-results-with-alternative-direct-mp4-video-sources-that-are-publicly-accessible-embeddable-without-restrictions-and-play-without-requiring-authentication-or-special-permissions-use-pexels-videos-api-free-tier-or-a-curated-list-of-direct-public-domain-mp4-urls-e-g-from-pixabay-coverr-or-mixkit-to-ensure-videos-are-uncensored-and-always-playable-inline",
+      "title": "Replace any currently used video sources in the VideoGenerator component that produce blocked, censored, or unplayable results with alternative direct MP4 video sources that are publicly accessible, embeddable without restrictions, and play without requiring authentication or special permissions. Use Pexels Videos API (free tier) or a curated list of direct public-domain MP4 URLs (e.g., from Pixabay, Coverr, or Mixkit) to ensure videos are uncensored and always playable inline.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-layout-of-the-imagegenerator-component-so-that-generated-images-are-always-visible-replace-any-broken-or-question-mark-producing-image-sources-use-multiple-public-image-platforms-as-sources-e-g-unsplash-picsum-pexels-so-that-if-one-platform-fails-to-load-the-component-falls-back-to-another-the-generated-image-must-always-render-visibly-in-the-ui-no-broken-image-icons-or-question-mark-placeholders",
+      "title": "Fix the layout of the ImageGenerator component so that generated images are always visible. Replace any broken or question-mark-producing image sources. Use multiple public image platforms as sources (e.g., Unsplash, Picsum, Pexels) so that if one platform fails to load, the component falls back to another. The generated image must always render visibly in the UI — no broken image icons or question mark placeholders.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-layout-of-the-videogenerator-component-so-that-generated-videos-always-render-visibly-inline-replace-all-youtube-based-video-sources-with-direct-mp4-urls-from-at-least-two-alternative-platforms-e-g-mixkit-and-pexels-videos-free-tier-direct-mp4-links-or-coverr-and-pixabay-the-generated-video-must-display-as-a-playable-video-element-immediately-after-generation-no-question-mark-placeholders-or-broken-media-icons",
+      "title": "Fix the layout of the VideoGenerator component so that generated videos always render visibly inline. Replace all YouTube-based video sources with direct MP4 URLs from at least two alternative platforms (e.g., Mixkit and Pexels Videos free-tier direct MP4 links, or Coverr and Pixabay). The generated video must display as a playable <video> element immediately after generation — no question mark placeholders or broken media icons.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-layout-of-the-photogallery-component-so-that-all-photos-uploaded-to-profile-feed-or-shared-in-chats-render-visibly-replace-any-single-source-image-url-construction-with-a-multi-platform-fallback-approach-attempt-to-load-from-the-stored-source-first-then-fall-back-to-a-secondary-public-image-platform-e-g-picsum-photos-if-the-primary-fails-ensure-the-grid-and-lightbox-views-both-display-images-correctly-with-no-broken-image-icons-or-question-marks",
+      "title": "Fix the layout of the PhotoGallery component so that all photos (uploaded to profile feed or shared in chats) render visibly. Replace any single-source image URL construction with a multi-platform fallback approach — attempt to load from the stored source first, then fall back to a secondary public image platform (e.g., Picsum Photos) if the primary fails. Ensure the grid and lightbox views both display images correctly with no broken image icons or question marks.",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-layout-of-the-videogallery-component-so-that-all-videos-uploaded-to-profile-feed-or-shared-in-chats-render-visibly-as-inline-playable-video-elements-remove-any-youtube-based-source-urls-use-direct-mp4-url-sources-from-at-least-two-alternative-platforms-mixkit-pexels-coverr-or-pixabay-as-fallback-sources-ensure-no-broken-video-icons-or-question-mark-placeholders-appear-in-the-grid-view-or-in-chat-messages",
+      "title": "Fix the layout of the VideoGallery component so that all videos (uploaded to profile feed or shared in chats) render visibly as inline playable <video> elements. Remove any YouTube-based source URLs. Use direct MP4 URL sources from at least two alternative platforms (Mixkit, Pexels, Coverr, or Pixabay) as fallback sources. Ensure no broken video icons or question mark placeholders appear in the grid view or in chat messages.",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-layout-of-the-searchpage-photo-and-video-tabs-so-that-search-results-display-visibly-for-photo-search-use-multiple-image-source-platforms-e-g-unsplash-source-urls-and-picsum-as-fallback-so-results-always-load-for-video-search-replace-any-youtube-based-embed-or-search-results-with-direct-mp4-sources-from-two-alternative-platforms-e-g-pexels-videos-api-free-tier-and-mixkit-ensure-all-search-result-thumbnails-and-videos-render-without-broken-icons-or-question-mark-placeholders",
+      "title": "Fix the layout of the SearchPage photo and video tabs so that search results display visibly. For photo search, use multiple image source platforms (e.g., Unsplash source URLs and Picsum as fallback) so results always load. For video search, replace any YouTube-based embed or search results with direct MP4 sources from two alternative platforms (e.g., Pexels Videos API free tier and Mixkit). Ensure all search result thumbnails and videos render without broken icons or question mark placeholders.",
+      "reqIds": [
+        "REQ-31"
       ],
       "version": 1
     }
@@ -144,6 +313,50 @@
       "reqIds": [
         "REQ-2"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Replace Internet Identity login with Apple or Google OAuth authentication for account registration and login",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Update the backend to support username/password authentication: add a registerUser function accepting username, password hash, display name, and bio; add a loginUser function accepting username and password that returns a session token or success flag; store user credentials in stable backend state; remove or decouple any Internet Identity principal-based user lookup where it blocks registration and login.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Add in-app web photo search: users can search for photos from the web within the app and view results privately (not visible on their profile or feed)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Add in-app video search: users can search for videos from the web within the app, watch them inline, results are private and not shown on profile or feed",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-19",
+      "summary": "Add a Settings screen with toggles for app preferences",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "AI video generator should allow users to tap and watch generated videos inline without requiring them to save first",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Fix video and image display layout — content shows a question mark and is not visible; switch away from YouTube for videos (use two alternative video platforms/sources); use multiple image platforms for photo display and search",
+      "reqIds": [],
       "status": "pending"
     }
   ],

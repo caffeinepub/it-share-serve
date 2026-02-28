@@ -13,20 +13,19 @@ import type { Principal } from '@icp-sdk/core/principal';
 export type ExternalBlob = Uint8Array;
 export interface Message {
   'content' : string,
-  'sender' : Principal,
+  'senderUsername' : Username,
   'timestamp' : bigint,
 }
 export interface UserProfile {
   'bio' : string,
-  'username' : string,
+  'username' : Username,
   'profileNumber' : bigint,
   'displayName' : string,
-  'avatarUrl' : string,
-  'profilePic' : [] | [ExternalBlob],
 }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export type Username = string;
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -55,32 +54,33 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
-  'acceptContactRequest' : ActorMethod<[Principal], undefined>,
-  'addPhotoToFeed' : ActorMethod<[ExternalBlob], undefined>,
-  'addVideoToFeed' : ActorMethod<[ExternalBlob], undefined>,
+  'acceptContactRequest' : ActorMethod<[Username, Username], undefined>,
+  'addPhotoToFeed' : ActorMethod<[Username, ExternalBlob], undefined>,
+  'addVideoToFeed' : ActorMethod<[Username, ExternalBlob], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'declineContactRequest' : ActorMethod<[Principal], undefined>,
+  'declineContactRequest' : ActorMethod<[Username, Username], undefined>,
   'findUserByProfileNumber' : ActorMethod<[bigint], UserProfile>,
   'findUsersByUsername' : ActorMethod<[string], Array<UserProfile>>,
-  'getCallerContacts' : ActorMethod<[], Array<UserProfile>>,
-  'getCallerUserProfile' : ActorMethod<[], UserProfile>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getConversation' : ActorMethod<[Principal], Array<Message>>,
-  'getPendingContactRequests' : ActorMethod<[], Array<UserProfile>>,
-  'getUserPhotoFeed' : ActorMethod<[Principal], Array<ExternalBlob>>,
-  'getUserPhotos' : ActorMethod<[Principal], Array<ExternalBlob>>,
-  'getUserProfile' : ActorMethod<[Principal], UserProfile>,
-  'getUserVideoFeed' : ActorMethod<[Principal], Array<ExternalBlob>>,
-  'getUserVideos' : ActorMethod<[Principal], Array<ExternalBlob>>,
+  'getContacts' : ActorMethod<[Username], Array<UserProfile>>,
+  'getConversation' : ActorMethod<[Username, Username], Array<Message>>,
+  'getPendingContactRequests' : ActorMethod<[Username], Array<UserProfile>>,
+  'getProfileByPrincipal' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getUserPhotoFeed' : ActorMethod<[Username], Array<ExternalBlob>>,
+  'getUserPhotos' : ActorMethod<[Username], Array<ExternalBlob>>,
+  'getUserProfile' : ActorMethod<[Username], UserProfile>,
+  'getUserVideoFeed' : ActorMethod<[Username], Array<ExternalBlob>>,
+  'getUserVideos' : ActorMethod<[Username], Array<ExternalBlob>>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'register' : ActorMethod<[string, string, string, string], undefined>,
+  'loginUser' : ActorMethod<[Username, string], boolean>,
+  'registerUser' : ActorMethod<[Username, string, string, string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'sendContactRequest' : ActorMethod<[Principal], undefined>,
-  'sendMessage' : ActorMethod<[Principal, string], undefined>,
-  'sharePhoto' : ActorMethod<[ExternalBlob], undefined>,
-  'shareVideo' : ActorMethod<[ExternalBlob], undefined>,
-  'updateCallerUserProfile' : ActorMethod<[string, string, string], undefined>,
-  'uploadProfilePic' : ActorMethod<[ExternalBlob], undefined>,
+  'sendContactRequest' : ActorMethod<[Username, Username], undefined>,
+  'sendMessage' : ActorMethod<[Username, Username, string], undefined>,
+  'sharePhoto' : ActorMethod<[Username, ExternalBlob], undefined>,
+  'shareVideo' : ActorMethod<[Username, ExternalBlob], undefined>,
+  'updateUserProfile' : ActorMethod<[Username, string, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
