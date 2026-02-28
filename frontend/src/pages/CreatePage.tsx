@@ -1,117 +1,75 @@
-import { useState } from 'react';
-import { Sparkles, Image, Video, Upload } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import AnimatedHeading from '../components/AnimatedHeading';
+import React, { useRef } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Image, Video, Upload } from 'lucide-react';
 import ImageGenerator from '../components/ImageGenerator';
 import VideoGenerator from '../components/VideoGenerator';
 import PhotoUploader from '../components/PhotoUploader';
 import VideoUploader from '../components/VideoUploader';
+import DailyChallengeWidget from '../components/DailyChallengeWidget';
+import AnimatedHeading from '../components/AnimatedHeading';
 
 export default function CreatePage() {
-  const [activeTab, setActiveTab] = useState('generate');
+  const imageGeneratorRef = useRef<{ setPrompt: (p: string) => void } | null>(null);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-up">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Sparkles className="w-6 h-6 text-neon-violet" />
-        <AnimatedHeading text="Create" variant="gradient" as="h1" className="text-2xl font-bold" />
+      <div className="px-4 pt-6 pb-4 border-b border-border/50">
+        <AnimatedHeading
+          text="Create"
+          variant="shimmer"
+          className="text-2xl font-orbitron font-bold mb-1"
+        />
+        <p className="text-muted-foreground text-sm">Generate and share amazing content</p>
       </div>
 
-      {/* Mode Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-secondary/50 border border-border w-full">
-          <TabsTrigger
-            value="generate"
-            className="flex-1 flex items-center gap-2 data-[state=active]:bg-neon-violet/20 data-[state=active]:text-neon-violet"
-          >
-            <Sparkles className="w-4 h-4" />
-            AI Generate
-          </TabsTrigger>
-          <TabsTrigger
-            value="upload"
-            className="flex-1 flex items-center gap-2 data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan"
-          >
-            <Upload className="w-4 h-4" />
-            Upload Media
-          </TabsTrigger>
-        </TabsList>
+      <div className="px-4 py-4">
+        {/* Daily Challenge Widget */}
+        <div className="mb-6">
+          <DailyChallengeWidget
+            onUsePrompt={(prompt) => {
+              imageGeneratorRef.current?.setPrompt(prompt);
+            }}
+          />
+        </div>
 
-        {/* AI Generation Tab */}
-        <TabsContent value="generate" className="mt-6 space-y-8">
-          {/* Image Generation */}
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-neon-violet/20 border border-neon-violet/30 flex items-center justify-center">
-                <Image className="w-4 h-4 text-neon-violet" />
-              </div>
-              <div>
-                <h2 className="font-orbitron font-semibold text-sm text-neon-violet">Image Generation</h2>
-                <p className="text-xs text-muted-foreground">Create stunning images from text prompts</p>
-              </div>
-            </div>
-            <div className="card-dark rounded-2xl p-5 border border-neon-violet/15">
-              <ImageGenerator />
-            </div>
-          </section>
+        {/* Tabs */}
+        <Tabs defaultValue="generate-image" className="w-full">
+          <TabsList className="w-full grid grid-cols-4 bg-secondary/30 rounded-xl p-1 mb-6 h-auto">
+            {[
+              { value: 'generate-image', icon: Image, label: 'AI Image' },
+              { value: 'generate-video', icon: Video, label: 'AI Video' },
+              { value: 'upload-photo', icon: Upload, label: 'Photo' },
+              { value: 'upload-video', icon: Upload, label: 'Video' },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-xs font-medium data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-200"
+                >
+                  <Icon size={16} />
+                  {tab.label}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-          <Separator className="border-neon-violet/10" />
-
-          {/* Video Generation */}
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-neon-cyan/20 border border-neon-cyan/30 flex items-center justify-center">
-                <Video className="w-4 h-4 text-neon-cyan" />
-              </div>
-              <div>
-                <h2 className="font-orbitron font-semibold text-sm text-neon-cyan">Video Generation</h2>
-                <p className="text-xs text-muted-foreground">Generate short video clips from descriptions</p>
-              </div>
-            </div>
-            <div className="card-dark rounded-2xl p-5 border border-neon-cyan/15">
-              <VideoGenerator />
-            </div>
-          </section>
-        </TabsContent>
-
-        {/* Upload Tab */}
-        <TabsContent value="upload" className="mt-6 space-y-8">
-          {/* Photo Upload */}
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-neon-violet/20 border border-neon-violet/30 flex items-center justify-center">
-                <Image className="w-4 h-4 text-neon-violet" />
-              </div>
-              <div>
-                <h2 className="font-orbitron font-semibold text-sm text-neon-violet">Share a Photo</h2>
-                <p className="text-xs text-muted-foreground">Upload and share photos to your profile</p>
-              </div>
-            </div>
-            <div className="card-dark rounded-2xl p-5 border border-neon-violet/15">
-              <PhotoUploader />
-            </div>
-          </section>
-
-          <Separator className="border-neon-violet/10" />
-
-          {/* Video Upload */}
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-neon-cyan/20 border border-neon-cyan/30 flex items-center justify-center">
-                <Video className="w-4 h-4 text-neon-cyan" />
-              </div>
-              <div>
-                <h2 className="font-orbitron font-semibold text-sm text-neon-cyan">Share a Video</h2>
-                <p className="text-xs text-muted-foreground">Upload and share videos to your profile</p>
-              </div>
-            </div>
-            <div className="card-dark rounded-2xl p-5 border border-neon-cyan/15">
-              <VideoUploader />
-            </div>
-          </section>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="generate-image">
+            <ImageGenerator ref={imageGeneratorRef} />
+          </TabsContent>
+          <TabsContent value="generate-video">
+            <VideoGenerator />
+          </TabsContent>
+          <TabsContent value="upload-photo">
+            <PhotoUploader />
+          </TabsContent>
+          <TabsContent value="upload-video">
+            <VideoUploader />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

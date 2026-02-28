@@ -1,64 +1,176 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Search (real internet results) and AI generators",
+  "title": "Restore original dark neon theme layout across all screens",
   "requirements": [
     {
-      "id": "REQ-41",
-      "summary": "Rewrite SearchPage to deliver real internet search results for photos (Unsplash/Picsum) and videos (Pexels API with Mixkit/Coverr/Pixabay fallback pool)",
+      "id": "REQ-54",
+      "summary": "Restore the original dark neon theme layout with deep near-black backgrounds, vibrant neon accent colors (electric violet, cyan, hot pink), glowing UI elements, animated text effects, gradient highlights, and sleek futuristic styling across all pages and components",
       "acceptanceCriteria": [
-        "Typing a query in the photo tab and submitting returns a grid of 12 images that are visually relevant to the query.",
-        "Each photo image attempts to load from Unsplash source URL first, then falls back to Picsum if the primary fails — no broken image icons.",
-        "Typing a query in the video tab and submitting returns up to 9 inline playable <video> elements relevant to the query.",
-        "If the Pexels API key is missing or the call fails, keyword-matched fallback MP4 videos are shown instead of an error.",
-        "No search result is saved to the user's profile or visible to other users.",
-        "No random or query-unrelated placeholder content is ever shown."
+        "All pages render with deep near-black backgrounds (no light or white backgrounds visible).",
+        "Neon accent colors (cyan, violet, hot pink) are consistently applied to buttons, borders, headings, and interactive elements across all screens.",
+        "Glowing UI elements and gradient highlights are visible on cards, nav items, and action buttons.",
+        "Navigation (desktop sidebar and mobile bottom nav) uses the dark neon theme with no light-mode styling.",
+        "Login and Register pages display the neon dark theme with styled form fields and neon-colored call-to-action buttons.",
+        "The Settings, Profile, Create, Search, Chat, Contacts, Home, CustomizeDesign, and PurchaseConfirmation pages all render consistently in the dark neon style.",
+        "Animated text effects (shimmer, glow, or typewriter) are present where previously applied (e.g., AnimatedHeading component usage).",
+        "No page or component defaults to a light or unstyled white background."
       ],
       "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Ensure all CSS custom properties for the dark neon design system are properly defined with deep near-black backgrounds (--background, --card), vibrant neon accent colors (--cyan, --pink, --violet, --green, --yellow), and high-contrast text colors. Verify dark mode class applies these tokens consistently."
+        },
+        {
+          "path": "frontend/index.css",
+          "operation": "modify",
+          "description": "Verify and strengthen the root-level dark theme tokens to ensure deep near-black backgrounds and neon accent colors are applied globally. Add any missing neon color variable definitions that should cascade to all components."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Ensure the Tailwind theme extension includes all neon color tokens (cyan, pink, violet, green, yellow) as custom colors accessible via utility classes. Verify dark mode configuration is active and that background/foreground colors reference the darkest values from the design system."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Apply deep near-black background to the main layout container and header. Ensure desktop sidebar and mobile bottom navigation use neon accent colors with glowing effects on active items. Add gradient highlights to navigation elements and apply neon borders where appropriate."
+        },
+        {
+          "path": "frontend/src/pages/LoginPage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the login page with a deep near-black background, neon-styled form fields (cyan/violet borders with glow effects), and a vibrant call-to-action button using neon gradient or solid neon color. Ensure all text is high-contrast against the dark background."
+        },
+        {
+          "path": "frontend/src/pages/RegisterPage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the registration page matching the LoginPage styling: deep near-black background, neon-styled input fields with glowing borders, and vibrant neon-colored submit button. Ensure form labels and validation messages use high-contrast neon accent colors."
+        },
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the home page with deep near-black background. Ensure the welcome banner, quick action buttons, and profile summary cards use neon accent colors with glowing borders and gradient highlights. Integrate AnimatedHeading component for page title with shimmer or glow effect. Reference generated assets at frontend/public/assets/generated/app-bg.dim_1920x1080.png for background if appropriate."
+        },
+        {
+          "path": "frontend/src/pages/ChatPage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the chat page with deep near-black background. Style message bubbles with neon borders and subtle glow effects, differentiate sent/received messages using cyan and violet accents. Ensure the message input area has neon-styled borders and send button uses vibrant neon color."
+        },
+        {
+          "path": "frontend/src/pages/ContactsPage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the contacts page with deep near-black background. Style contact cards with neon borders and glowing effects on hover. Apply neon accent colors to tab navigation and action buttons (add contact, accept/decline requests). Ensure user avatars have neon-colored borders or glow effects."
+        },
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the profile page with deep near-black background. Style the profile header with neon gradient highlights, glowing avatar border, and neon-colored edit button. Ensure photo/video gallery tabs use neon accent colors and gallery items have subtle neon borders with glow effects on hover."
+        },
+        {
+          "path": "frontend/src/pages/CreatePage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the create page with deep near-black background. Style tab navigation with neon accent colors and glowing active state. Ensure generator components and upload areas have neon-styled borders with gradient highlights. Apply neon colors to action buttons (generate, upload, share)."
+        },
         {
           "path": "frontend/src/pages/SearchPage.tsx",
           "operation": "modify",
-          "description": "Rewrite the photo search tab to use the Unsplash Source URL pattern (https://source.unsplash.com/400x300/?{encodeURIComponent(query)},{index}) for 12 images with Picsum (https://picsum.photos/seed/{query}-{index}/400/300) as automatic per-image fallback on load error. Rewrite the video search tab to call the Pexels Videos API free tier (https://api.pexels.com/videos/search) using a PEXELS_API_KEY placeholder constant, displaying up to 9 inline playable <video> elements with poster thumbnails; on API failure, fall back to a curated pool of at least 40 keyword-mapped direct MP4 URLs from Mixkit/Coverr/Pixabay covering diverse categories (nature, sports, travel, animals, food, technology, music, cities, space, etc.). Remove all random, hash-based, or hardcoded placeholder logic. Ensure all results remain private and are not saved to user profiles."
-        }
-      ]
-    },
-    {
-      "id": "REQ-42",
-      "summary": "Fix ImageGenerator to reliably produce and display real AI-generated images using Pollinations AI with automatic retry logic",
-      "acceptanceCriteria": [
-        "Submitting any text prompt triggers a visible loading spinner.",
-        "A Pollinations AI image URL constructed from the prompt and a random seed is used as the <img> src.",
-        "If the image fails to load, the component automatically retries up to 3 times with different seed values before showing an error message.",
-        "The displayed image visually corresponds to the user's prompt.",
-        "No keyword mapping, hash-based, or random-placeholder logic exists in the component.",
-        "The Save to Profile and Download buttons remain functional using the resolved image URL."
-      ],
-      "file_operations": [
+          "description": "Apply dark neon theme to the search page with deep near-black background. Style the search input with neon border and glow effect on focus. Apply neon accent colors to tab navigation (Photos/Videos) and ensure result cards have neon borders with glowing hover effects."
+        },
+        {
+          "path": "frontend/src/pages/SettingsPage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the settings page with deep near-black background. Style settings sections with neon borders and gradient highlights. Ensure toggle switches use neon accent colors (cyan/pink) for active state with glowing effects. Style section headings with neon colors or integrate AnimatedHeading component."
+        },
+        {
+          "path": "frontend/src/pages/CustomizeDesignPage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the customize design page with deep near-black background. Style the design preview area with neon border and glow effect. Apply neon accent colors to option selectors (color palette chips, size/finish buttons) with glowing active states. Ensure the purchase button uses vibrant neon gradient or solid neon color."
+        },
+        {
+          "path": "frontend/src/pages/PurchaseConfirmationPage.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the purchase confirmation page with deep near-black background. Style the order summary card with neon borders and gradient highlights. Use neon accent colors for pricing details and apply vibrant neon styling to the final confirmation button with glow effect."
+        },
+        {
+          "path": "frontend/src/components/AnimatedHeading.tsx",
+          "operation": "modify",
+          "description": "Verify AnimatedHeading component applies neon-themed animations (shimmer, glow, typewriter) using the neon color palette from the design system. Ensure animation variants use cyan, violet, hot pink, and gradient effects consistent with the dark neon theme."
+        },
+        {
+          "path": "frontend/src/components/StoriesRow.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the stories row with deep near-black background. Style story avatars with neon-colored borders (cyan/violet rings) and glowing effects. Ensure hover state intensifies the glow and uses gradient highlights."
+        },
+        {
+          "path": "frontend/src/components/StoryViewerModal.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the story viewer modal with deep near-black overlay. Style the story card with neon gradient background, glowing borders, and neon-colored progress bar. Ensure user info text uses high-contrast neon accent colors."
+        },
+        {
+          "path": "frontend/src/components/SuggestedUsers.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to suggested users cards with deep near-black background. Style user cards with neon borders and glowing effects on hover. Apply neon accent colors to add contact buttons with gradient highlights."
+        },
+        {
+          "path": "frontend/src/components/TrendingTopics.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to trending topics with deep near-black background. Style hashtag chips with neon borders (cyan/violet) and glowing effects. Ensure hover state uses neon gradient highlights and intensified glow."
+        },
+        {
+          "path": "frontend/src/components/DailyChallengeWidget.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the daily challenge widget with deep near-black background. Style the widget card with neon border and gradient highlights. Apply neon accent colors to the challenge button with glow effect and integrate AnimatedHeading for the widget title."
+        },
+        {
+          "path": "frontend/src/components/VideoFactsCarousel.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the video facts carousel with deep near-black background. Style fact cards with neon borders and gradient backgrounds. Apply neon colors to navigation arrows and dot indicators with glowing active states. Reference generated assets at frontend/public/assets/generated/video-facts-bg.dim_800x450.png for carousel background if appropriate."
+        },
+        {
+          "path": "frontend/src/components/MessageInput.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the message input component with deep near-black background. Style the text input with neon border and glow effect on focus. Apply neon accent colors to attachment buttons and send button with gradient highlights."
+        },
+        {
+          "path": "frontend/src/components/MessageList.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the message list with deep near-black background. Style message bubbles with neon borders and subtle glow effects, using cyan for sent messages and violet for received. Ensure timestamps and avatars use high-contrast neon accent colors."
+        },
+        {
+          "path": "frontend/src/components/PhotoGallery.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the photo gallery with deep near-black background. Style photo grid items with neon borders and glowing hover effects. Ensure the lightbox overlay uses deep near-black background with neon-styled close button."
+        },
+        {
+          "path": "frontend/src/components/VideoGallery.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the video gallery with deep near-black background. Style video grid items with neon borders and glowing hover effects. Ensure video controls use neon accent colors consistent with the design system."
+        },
+        {
+          "path": "frontend/src/components/PhotoUploader.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the photo uploader with deep near-black background. Style the file input area with neon border and glowing dashed outline. Apply neon accent colors to the upload button with gradient highlights and ensure progress indicators use neon colors."
+        },
+        {
+          "path": "frontend/src/components/VideoUploader.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the video uploader with deep near-black background. Style the file input area with neon border and glowing dashed outline. Apply neon accent colors to the upload button with gradient highlights and ensure progress indicators use neon colors."
+        },
         {
           "path": "frontend/src/components/ImageGenerator.tsx",
           "operation": "modify",
-          "description": "Rewrite to use the Pollinations AI image generation API (https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?seed={seed}&width=800&height=600&nologo=true) as the sole source. Generate a unique random seed on each generation attempt. Implement automatic retry logic: on image load error (broken src, network error, or HTTP failure), retry up to 3 times using different seed values (seed+1, seed+2, seed+3) before displaying a clear user-facing error message. Show a visible loading spinner while the image is being fetched. Remove all keyword mapping, hash-based selection, or random placeholder logic. Ensure Save to Profile and Download actions remain functional using the final resolved image URL."
-        }
-      ]
-    },
-    {
-      "id": "REQ-43",
-      "summary": "Fix VideoGenerator to reliably produce and display real AI-generated or API-matched videos using Pollinations AI with Pexels API fallback",
-      "acceptanceCriteria": [
-        "Submitting any text prompt triggers a visible loading spinner.",
-        "The component first attempts the Pollinations AI video endpoint with the user's prompt.",
-        "If Pollinations fails or times out, the component falls back to the Pexels Videos API using the prompt as the search query.",
-        "The first valid video result is displayed as an inline playable <video> element with controls immediately after generation completes.",
-        "No saving or downloading is required to watch the video inline.",
-        "If both sources fail, a user-facing error message with a Retry button is shown.",
-        "No local keyword-to-video mapping exists in the component.",
-        "Save and Share buttons remain functional once a video is loaded."
-      ],
-      "file_operations": [
+          "description": "Apply dark neon theme to the image generator with deep near-black background. Style the prompt input with neon border and glow effect on focus. Apply neon accent colors to action buttons (generate, download, save) with gradient highlights and glowing effects."
+        },
         {
           "path": "frontend/src/components/VideoGenerator.tsx",
           "operation": "modify",
-          "description": "Rewrite to call the Pollinations AI video endpoint (https://video.pollinations.ai/prompt/{encodeURIComponent(prompt)}) as the primary source and display the result as an inline <video> element with controls and autoplay muted. If that endpoint returns an error or no playable content within 10 seconds, fall back to the Pexels Videos API free tier (https://api.pexels.com/videos/search?query={encodeURIComponent(prompt)}&per_page=5&orientation=landscape) using a PEXELS_API_KEY placeholder constant; display the first valid SD-quality direct MP4 URL as an inline <video> element. Show a loading spinner during all API calls. On failure of both sources, display a clear user-facing error message with a Retry button. Remove all local keyword-to-video mapping logic. Ensure Save and Share actions remain available after a video is loaded."
+          "description": "Apply dark neon theme to the video generator with deep near-black background. Style the prompt input with neon border and glow effect on focus. Apply neon accent colors to action buttons (generate, refresh, download, share) with gradient highlights and glowing effects."
+        },
+        {
+          "path": "frontend/src/components/DesignCustomizer.tsx",
+          "operation": "modify",
+          "description": "Apply dark neon theme to the design customizer form with deep near-black background. Style option selectors (color palettes, sizes, finishes) with neon borders and glowing active states. Apply neon accent colors to the quantity slider and custom text input with glow effects. Ensure the submit button uses vibrant neon gradient."
         }
       ]
     }

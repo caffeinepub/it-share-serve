@@ -1,140 +1,175 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
+import { ArrowLeft, MessageCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { useGetConversation, useSendMessage, useGetUserProfile } from '../hooks/useQueries';
-import type { Message } from '../backend';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Send, Loader2 } from 'lucide-react';
+import { useGetContacts, useGetConversation, useSendMessage } from '../hooks/useQueries';
+import MessageList from '../components/MessageList';
+import MessageInput from '../components/MessageInput';
 
 export default function ChatPage() {
-  const { username: partnerUsername } = useParams({ from: '/chat/$username' });
+  const params = useParams({ strict: false }) as { username?: string };
+  const partnerUsername = params.username;
   const navigate = useNavigate();
-  const { username } = useAuth();
-  const [messageText, setMessageText] = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const { username: myUsername } = useAuth();
+  const { data: contacts = [] } = useGetContacts(myUsername || '');
 
-  const { data: partnerProfile } = useGetUserProfile(partnerUsername);
-  const { data: messages = [], isLoading } = useGetConversation(username, partnerUsername);
-  const sendMessage = useSendMessage();
+  const [selectedPartner, setSelectedPartner] = useState<string | null>(partnerUsername || null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!messageText.trim() || !username) return;
-    try {
-      await sendMessage.mutateAsync({
-        sender: username,
-        receiver: partnerUsername,
-        text: messageText.trim(),
-      });
-      setMessageText('');
-    } catch (err: any) {
-      console.error('Failed to send message:', err.message);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const partnerDisplayName = partnerProfile?.displayName || partnerUsername;
-  const partnerInitials = partnerDisplayName
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    if (partnerUsername) setSelectedPartner(partnerUsername);
+  }, [partnerUsername]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-2xl mx-auto px-4 py-4">
-      {/* Chat header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/contacts' })}>
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <Avatar>
-          <AvatarFallback className="bg-primary/20 text-primary font-semibold">
-            {partnerInitials}
-          </AvatarFallback>
-        </Avatar>
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Contacts sidebar */}
+      <div className={`${selectedPartner ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 border-r border-border/50 bg-card/30`}>
+        <div className="p-4 border-b border-border/50">
+          <h2 className="font-orbitron font-bold text-lg gradient-neon-text">Messages</h2>
+          <p className="text-muted-foreground text-xs mt-1">{contacts.length} contacts</p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {contacts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-48 text-center px-4">
+              <MessageCircle size={32} className="text-muted-foreground mb-3" />
+              <p className="text-muted-foreground text-sm">No contacts yet</p>
+              <p className="text-muted-foreground/60 text-xs mt-1">Add contacts to start chatting</p>
+            </div>
+          ) : (
+            <div className="p-2 space-y-1">
+              {contacts.map((contact) => (
+                <button
+                  key={contact.username}
+                  onClick={() => {
+                    setSelectedPartner(contact.username);
+                    navigate({ to: '/chat/$username', params: { username: contact.username } });
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 text-left ${
+                    selectedPartner === contact.username
+                      ? 'bg-primary/10 border border-primary/30'
+                      : 'hover:bg-secondary/50'
+                  }`}
+                  style={
+                    selectedPartner === contact.username
+                      ? { borderColor: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan)20' }
+                      : {}
+                  }
+                >
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-violet))',
+                      color: 'var(--background)',
+                    }}
+                  >
+                    {contact.displayName[0]?.toUpperCase() || contact.username[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-foreground text-sm truncate">{contact.displayName}</div>
+                    <div className="text-muted-foreground text-xs truncate">@{contact.username}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chat area */}
+      <div className={`${selectedPartner ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
+        {selectedPartner ? (
+          <ChatConversation
+            myUsername={myUsername || ''}
+            partnerUsername={selectedPartner}
+            onBack={() => {
+              setSelectedPartner(null);
+              navigate({ to: '/contacts' });
+            }}
+          />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
+              style={{
+                background: 'linear-gradient(135deg, var(--neon-cyan)20, var(--neon-violet)20)',
+                border: '1px solid var(--neon-cyan)40',
+              }}
+            >
+              <MessageCircle size={36} style={{ color: 'var(--neon-cyan)' }} />
+            </div>
+            <h3 className="font-orbitron font-bold text-xl gradient-neon-text mb-2">Start a Conversation</h3>
+            <p className="text-muted-foreground text-sm">Select a contact to begin chatting</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChatConversation({
+  myUsername,
+  partnerUsername,
+  onBack,
+}: {
+  myUsername: string;
+  partnerUsername: string;
+  onBack: () => void;
+}) {
+  const { data: messages = [], refetch } = useGetConversation(myUsername, partnerUsername);
+  const sendMessage = useSendMessage();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Poll for new messages
+  useEffect(() => {
+    const interval = setInterval(() => refetch(), 3000);
+    return () => clearInterval(interval);
+  }, [refetch]);
+
+  const handleSend = async (text: string) => {
+    if (!text.trim() || !myUsername) return;
+    await sendMessage.mutateAsync({ sender: myUsername, receiver: partnerUsername, text });
+    refetch();
+  };
+
+  return (
+    <>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-card/30 backdrop-blur-sm">
+        <button
+          onClick={onBack}
+          className="md:hidden p-2 rounded-xl hover:bg-secondary/50 transition-colors text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+          style={{
+            background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-violet))',
+            color: 'var(--background)',
+          }}
+        >
+          {partnerUsername[0]?.toUpperCase()}
+        </div>
         <div>
-          <p className="font-semibold text-foreground">{partnerDisplayName}</p>
-          <p className="text-xs text-muted-foreground">@{partnerUsername}</p>
+          <div className="font-semibold text-foreground">@{partnerUsername}</div>
+          <div className="text-xs" style={{ color: 'var(--neon-green)' }}>● Online</div>
         </div>
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 py-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No messages yet. Say hello!</p>
-          </div>
-        ) : (
-          <div className="space-y-3 px-1">
-            {messages.map((msg: Message, i: number) => {
-              const isOwn = msg.senderUsername === username;
-              return (
-                <div
-                  key={i}
-                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm ${
-                      isOwn
-                        ? 'bg-primary text-primary-foreground rounded-br-sm'
-                        : 'bg-card border border-border text-foreground rounded-bl-sm'
-                    }`}
-                  >
-                    <p>{msg.content}</p>
-                    <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                      {new Date(Number(msg.timestamp) / 1_000_000).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={bottomRef} />
-          </div>
-        )}
-      </ScrollArea>
-
-      {/* Message input */}
-      <div className="flex items-center gap-3 pt-4 border-t border-border">
-        <Input
-          placeholder="Type a message…"
-          value={messageText}
-          onChange={(e) => setMessageText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={sendMessage.isPending}
-          className="flex-1"
-        />
-        <Button
-          size="icon"
-          onClick={handleSend}
-          disabled={sendMessage.isPending || !messageText.trim()}
-        >
-          {sendMessage.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
-        </Button>
+      <div className="flex-1 overflow-y-auto p-4">
+        <MessageList messages={messages} myUsername={myUsername} />
+        <div ref={messagesEndRef} />
       </div>
-    </div>
+
+      {/* Input */}
+      <div className="border-t border-border/50 bg-card/30">
+        <MessageInput onSend={handleSend} isLoading={sendMessage.isPending} />
+      </div>
+    </>
   );
 }

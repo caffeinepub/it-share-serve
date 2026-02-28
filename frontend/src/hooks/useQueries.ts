@@ -51,7 +51,7 @@ export function useGetUserProfile(username: string | null) {
     queryFn: async () => {
       if (!actor || !username) return null;
       try {
-        return await actor.getUserProfile(username);
+        return await actor.getUserProfileByUsername(username);
       } catch {
         return null;
       }
@@ -91,6 +91,23 @@ export function useFindUsersByUsername(searchTerm: string) {
       return actor.findUsersByUsername(searchTerm);
     },
     enabled: !!actor && !actorFetching && searchTerm.trim().length > 0,
+  });
+}
+
+// Fetch all registered users (used for Stories row and Suggested Users)
+export function useGetAllUsers() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery<UserProfile[]>({
+    queryKey: ['allUsers'],
+    queryFn: async () => {
+      if (!actor) return [];
+      try {
+        return await actor.findUsersByUsername('');
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!actor && !actorFetching,
   });
 }
 

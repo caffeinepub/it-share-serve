@@ -47,7 +47,8 @@ export interface backendInterface {
     getProfileByPrincipal(user: Principal): Promise<UserProfile | null>;
     getUserPhotoFeed(username: Username): Promise<Array<ExternalBlob>>;
     getUserPhotos(username: Username): Promise<Array<ExternalBlob>>;
-    getUserProfile(username: Username): Promise<UserProfile>;
+    getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserProfileByUsername(username: Username): Promise<UserProfile>;
     getUserVideoFeed(username: Username): Promise<Array<ExternalBlob>>;
     getUserVideos(username: Username): Promise<Array<ExternalBlob>>;
     isCallerAdmin(): Promise<boolean>;

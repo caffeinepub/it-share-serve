@@ -53,6 +53,9 @@ actor {
   let videoFeeds = Map.empty<Username, List.List<Storage.ExternalBlob>>();
   let authCredentials = Map.empty<Username, AuthCredentials>();
 
+  // Maps principal -> username for ownership verification
+  let principalToUsername = Map.empty<Principal, Username>();
+
   // Principal-based profile store (required by instructions for getCallerUserProfile / saveCallerUserProfile)
   let principalProfiles = Map.empty<Principal, UserProfile>();
 
@@ -74,6 +77,14 @@ actor {
     principalProfiles.add(caller, profile);
   };
 
+  // Required by instructions: getUserProfile to fetch other users' profiles by Principal
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    principalProfiles.get(user);
+  };
+
   public query ({ caller }) func getProfileByPrincipal(user : Principal) : async ?UserProfile {
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Can only view your own profile");
@@ -89,6 +100,9 @@ actor {
   public shared ({ caller }) func registerUser(username : Username, password : Text, displayName : Text, bio : Text) : async () {
     if (authCredentials.containsKey(username)) {
       Runtime.trap("Username already taken");
+    };
+    if (principalToUsername.containsKey(caller)) {
+      Runtime.trap("This principal is already registered");
     };
 
     let credentials : AuthCredentials = {
@@ -107,6 +121,7 @@ actor {
 
     authCredentials.add(username, credentials);
     userProfiles.add(username, profile);
+    principalToUsername.add(caller, username);
     nextProfileNumber += 1;
   };
 
@@ -125,18 +140,32 @@ actor {
   // Profile management functions
   // -------------------------
 
-  // Public profile lookup - open to all (guests can search)
-  public query ({ caller }) func getUserProfile(username : Username) : async UserProfile {
+  // Public profile lookup by username - open to all (guests can search)
+  public query ({ caller }) func getUserProfileByUsername(username : Username) : async UserProfile {
     switch (userProfiles.get(username)) {
       case (null) { Runtime.trap("User not found") };
       case (?profile) { profile };
     };
   };
 
-  // Updating a profile requires #user role
+  // Updating a profile requires #user role and ownership
   public shared ({ caller }) func updateUserProfile(username : Username, displayName : Text, bio : Text) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update profiles");
+    };
+    // Ownership check: caller must own this username, or be admin
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        if (not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You do not own this profile");
+        };
+      };
+      case (?uname) {
+        if (uname != username and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You can only update your own profile");
+        };
+      };
     };
     switch (userProfiles.get(username)) {
       case (null) { Runtime.trap("User not found") };
@@ -175,12 +204,27 @@ actor {
 
   // -------------------------
   // Contact and messaging functions
-  // All require #user role
+  // All require #user role; write operations require ownership
   // -------------------------
 
+  // Viewing contacts: requires #user and ownership (or admin)
   public query ({ caller }) func getContacts(username : Username) : async [UserProfile] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view contacts");
+    };
+    // Ownership check: caller must own this username, or be admin
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        if (not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You can only view your own contacts");
+        };
+      };
+      case (?uname) {
+        if (uname != username and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You can only view your own contacts");
+        };
+      };
     };
     switch (contactLists.get(username)) {
       case (null) { [] };
@@ -190,9 +234,24 @@ actor {
     };
   };
 
+  // Viewing pending requests: requires #user and ownership (or admin)
   public query ({ caller }) func getPendingContactRequests(username : Username) : async [UserProfile] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view pending contact requests");
+    };
+    // Ownership check
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        if (not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You can only view your own pending requests");
+        };
+      };
+      case (?uname) {
+        if (uname != username and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You can only view your own pending requests");
+        };
+      };
     };
     switch (pendingRequests.get(username)) {
       case (null) { [] };
@@ -202,9 +261,22 @@ actor {
     };
   };
 
+  // Sending a contact request: requires #user and ownership of sender username
   public shared ({ caller }) func sendContactRequest(sender : Username, targetUser : Username) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can send contact requests");
+    };
+    // Ownership check: caller must own the sender username
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        Runtime.trap("Unauthorized: You do not own this username");
+      };
+      case (?uname) {
+        if (uname != sender) {
+          Runtime.trap("Unauthorized: You can only send contact requests as yourself");
+        };
+      };
     };
     if (not userProfiles.containsKey(targetUser)) {
       Runtime.trap("Target user not found");
@@ -246,9 +318,22 @@ actor {
     };
   };
 
+  // Accepting a contact request: requires #user and ownership of username
   public shared ({ caller }) func acceptContactRequest(username : Username, requester : Username) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can accept contact requests");
+    };
+    // Ownership check: caller must own the username
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        Runtime.trap("Unauthorized: You do not own this username");
+      };
+      case (?uname) {
+        if (uname != username) {
+          Runtime.trap("Unauthorized: You can only accept requests for your own account");
+        };
+      };
     };
     switch (pendingRequests.get(username)) {
       case (null) { Runtime.trap("No pending requests for this user") };
@@ -264,9 +349,22 @@ actor {
     };
   };
 
+  // Declining a contact request: requires #user and ownership of username
   public shared ({ caller }) func declineContactRequest(username : Username, requester : Username) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can decline contact requests");
+    };
+    // Ownership check: caller must own the username
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        Runtime.trap("Unauthorized: You do not own this username");
+      };
+      case (?uname) {
+        if (uname != username) {
+          Runtime.trap("Unauthorized: You can only decline requests for your own account");
+        };
+      };
     };
     switch (pendingRequests.get(username)) {
       case (null) { Runtime.trap("No pending requests") };
@@ -298,9 +396,22 @@ actor {
     messages.add(receiver, receiverMsgList);
   };
 
+  // Sending a message: requires #user and ownership of sender username
   public shared ({ caller }) func sendMessage(sender : Username, receiver : Username, text : Text) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can send messages");
+    };
+    // Ownership check: caller must own the sender username
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        Runtime.trap("Unauthorized: You do not own this username");
+      };
+      case (?uname) {
+        if (uname != sender) {
+          Runtime.trap("Unauthorized: You can only send messages as yourself");
+        };
+      };
     };
     if (not userProfiles.containsKey(receiver)) {
       Runtime.trap("Receiver not found");
@@ -314,9 +425,24 @@ actor {
     _syncMessages(sender, receiver, message);
   };
 
+  // Viewing a conversation: requires #user and ownership of username (or admin)
   public query ({ caller }) func getConversation(username : Username, partner : Username) : async [Message] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view conversations");
+    };
+    // Ownership check: caller must own the username, or be admin
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        if (not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You can only view your own conversations");
+        };
+      };
+      case (?uname) {
+        if (uname != username and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You can only view your own conversations");
+        };
+      };
     };
     switch (messages.get(username)) {
       case (null) { [] };
@@ -328,12 +454,25 @@ actor {
 
   // -------------------------
   // Media sharing functions
-  // All require #user role
+  // All require #user role; write operations require ownership
   // -------------------------
 
+  // Sharing a photo: requires #user and ownership of username
   public shared ({ caller }) func sharePhoto(username : Username, blob : Storage.ExternalBlob) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can share photos");
+    };
+    // Ownership check
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        Runtime.trap("Unauthorized: You do not own this username");
+      };
+      case (?uname) {
+        if (uname != username) {
+          Runtime.trap("Unauthorized: You can only share photos for your own account");
+        };
+      };
     };
     let photoList = switch (sharedPhotos.get(username)) {
       case (null) { List.empty<Storage.ExternalBlob>() };
@@ -344,9 +483,22 @@ actor {
     sharedPhotos.add(username, photoList);
   };
 
+  // Sharing a video: requires #user and ownership of username
   public shared ({ caller }) func shareVideo(username : Username, blob : Storage.ExternalBlob) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can share videos");
+    };
+    // Ownership check
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        Runtime.trap("Unauthorized: You do not own this username");
+      };
+      case (?uname) {
+        if (uname != username) {
+          Runtime.trap("Unauthorized: You can only share videos for your own account");
+        };
+      };
     };
     let videoList = switch (sharedVideos.get(username)) {
       case (null) { List.empty<Storage.ExternalBlob>() };
@@ -357,6 +509,7 @@ actor {
     sharedVideos.add(username, videoList);
   };
 
+  // Viewing photos: requires #user; any user can view any user's photos
   public query ({ caller }) func getUserPhotos(username : Username) : async [Storage.ExternalBlob] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view photos");
@@ -367,6 +520,7 @@ actor {
     };
   };
 
+  // Viewing videos: requires #user; any user can view any user's videos
   public query ({ caller }) func getUserVideos(username : Username) : async [Storage.ExternalBlob] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view videos");
@@ -377,9 +531,22 @@ actor {
     };
   };
 
+  // Adding photo to feed: requires #user and ownership of username
   public shared ({ caller }) func addPhotoToFeed(username : Username, blob : Storage.ExternalBlob) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can add photos to feed");
+    };
+    // Ownership check
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        Runtime.trap("Unauthorized: You do not own this username");
+      };
+      case (?uname) {
+        if (uname != username) {
+          Runtime.trap("Unauthorized: You can only add photos to your own feed");
+        };
+      };
     };
     let photoList = switch (photoFeeds.get(username)) {
       case (null) { List.empty<Storage.ExternalBlob>() };
@@ -390,9 +557,22 @@ actor {
     photoFeeds.add(username, photoList);
   };
 
+  // Adding video to feed: requires #user and ownership of username
   public shared ({ caller }) func addVideoToFeed(username : Username, blob : Storage.ExternalBlob) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can add videos to feed");
+    };
+    // Ownership check
+    let callerUsername = principalToUsername.get(caller);
+    switch (callerUsername) {
+      case (null) {
+        Runtime.trap("Unauthorized: You do not own this username");
+      };
+      case (?uname) {
+        if (uname != username) {
+          Runtime.trap("Unauthorized: You can only add videos to your own feed");
+        };
+      };
     };
     let videoList = switch (videoFeeds.get(username)) {
       case (null) { List.empty<Storage.ExternalBlob>() };
@@ -403,6 +583,7 @@ actor {
     videoFeeds.add(username, videoList);
   };
 
+  // Viewing photo feed: requires #user; any user can view any user's feed
   public query ({ caller }) func getUserPhotoFeed(username : Username) : async [Storage.ExternalBlob] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view photo feeds");
@@ -413,6 +594,7 @@ actor {
     };
   };
 
+  // Viewing video feed: requires #user; any user can view any user's feed
   public query ({ caller }) func getUserVideoFeed(username : Username) : async [Storage.ExternalBlob] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view video feeds");

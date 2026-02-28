@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 21,
+  "projectStateVersion": 29,
   "summary": "ShareServe is an instant messaging app with photo and video sharing, AI image and video generation, account creation with custom username/profile number, contacts system, dark theme UI, text effects, and visual polish. Messaging is between in-app accounts only. AI generation follows standard content policies. Authentication uses Apple or Google login instead of Internet Identity.",
   "architectural_notes": [
     "Messaging is in-app only; no external SMS or phone network integration",
@@ -9,7 +9,8 @@
     "Web photo/video search results are private — not displayed on user profile, feed, or any shared area",
     "Do not use YouTube as a video source — use alternative platforms (e.g., Pexels, Mixkit, Coverr) for video playback",
     "In-app search should use a real embedded web browser or WebView rather than keyword-mapped placeholder results",
-    "Search (photo and video) must be backed by a real browser-based search, not keyword maps or a standalone iframe browser tab"
+    "Search (photo and video) must be backed by a real browser-based search, not keyword maps or a standalone iframe browser tab",
+    "Stories feature must only display real registered users — no fake/placeholder profile names or avatars"
   ],
   "known_issues": [
     "Account registration is broken and needs to be fixed alongside the auth migration to Apple/Google login",
@@ -18,7 +19,10 @@
     "Videos in search results or generator appear to be censored/restricted — user wants uncensored video content displayed",
     "Videos and images show a question mark placeholder and are not rendering — layout needs to be fixed",
     "Search page returns random/unrelated photos and videos instead of query-relevant results — search logic is not connected to user input",
-    "AI image and video generators are returning errors — current API integrations are broken and must be replaced with working alternatives"
+    "AI image generator still failing after multiple retry attempts — Pollinations AI image endpoint may be unreachable or returning errors",
+    "AI video generator still failing to load video — Pollinations AI video endpoint and Pexels fallback both appear broken",
+    "Stories layout was removed or broken in a recent build — must be restored; fake placeholder user names must be removed from stories",
+    "Design purchase flow lacks customization — users can buy a design but cannot customize it before purchasing"
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -341,6 +345,94 @@
         "REQ-43"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-completely-rewrite-the-imagegenerator-component-to-abandon-the-pollinations-ai-endpoint-which-is-consistently-failing-and-instead-use-a-multi-source-fallback-chain-1-primary-https-image-pollinations-ai-prompt-encodeuricomponent-prompt-seed-seed-width-800-height-600-nologo-true-generate-a-new-random-seed-per-attempt-2-fallback-1-https-picsum-photos-seed-encodeuricomponent-prompt-seed-800-600-deterministic-but-prompt-influenced-3-fallback-2-construct-a-url-using-the-first-meaningful-keyword-extracted-from-the-prompt-against-https-source-unsplash-com-800x600-keyword-attempt-each-source-in-order-when-the-previous-one-fails-to-load-onerror-show-a-loading-spinner-during-fetching-only-display-the-final-user-facing-error-could-not-generate-an-image-please-try-a-different-prompt-or-try-again-later-after-all-three-sources-have-failed-the-retry-regenerate-button-must-reset-the-attempt-chain-from-source-1-with-a-new-seed-save-to-profile-and-download-actions-must-remain-functional-using-the-resolved-image-url",
+      "title": "Completely rewrite the ImageGenerator component to abandon the Pollinations AI endpoint (which is consistently failing) and instead use a multi-source fallback chain: (1) Primary: https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?seed={seed}&width=800&height=600&nologo=true — generate a new random seed per attempt; (2) Fallback 1: https://picsum.photos/seed/{encodeURIComponent(prompt)}-{seed}/800/600 — deterministic but prompt-influenced; (3) Fallback 2: construct a URL using the first meaningful keyword extracted from the prompt against https://source.unsplash.com/800x600/?{keyword}. Attempt each source in order when the previous one fails to load (onError). Show a loading spinner during fetching. Only display the final user-facing error 'Could not generate an image — please try a different prompt or try again later.' after all three sources have failed. The Retry/Regenerate button must reset the attempt chain from source 1 with a new seed. Save-to-profile and Download actions must remain functional using the resolved image URL.",
+      "reqIds": [
+        "REQ-44"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-completely-rewrite-the-videogenerator-component-to-abandon-the-pollinations-ai-video-endpoint-and-pexels-api-both-consistently-failing-and-instead-use-a-guaranteed-playable-curated-fallback-approach-build-a-keyword-to-mp4-mapping-of-at-least-50-entries-using-exclusively-direct-publicly-accessible-mp4-urls-from-mixkit-https-assets-mixkit-co-and-coverr-https-coverr-co-covering-diverse-categories-nature-space-ocean-city-animals-food-technology-sports-travel-music-art-people-mountains-cars-science-etc-extract-the-top-3-keywords-from-the-user-s-prompt-and-match-against-the-map-if-no-match-pick-from-a-broad-general-pool-of-at-least-10-diverse-mixkit-coverr-mp4s-display-the-matched-video-as-an-inline-video-element-with-controls-autoplay-and-muted-immediately-after-generation-show-a-loading-state-while-the-video-source-is-being-resolved-on-video-element-error-canplaythrough-failure-src-error-automatically-try-the-next-best-keyword-match-before-showing-a-user-facing-error-with-a-retry-button-remove-all-pollinations-and-pexels-api-call-logic-save-and-share-actions-must-remain-available-after-a-video-loads",
+      "title": "Completely rewrite the VideoGenerator component to abandon the Pollinations AI video endpoint and Pexels API (both consistently failing) and instead use a guaranteed-playable curated fallback approach: build a keyword-to-MP4 mapping of at least 50 entries using exclusively direct, publicly accessible MP4 URLs from Mixkit (https://assets.mixkit.co/...) and Coverr (https://coverr.co/...) covering diverse categories (nature, space, ocean, city, animals, food, technology, sports, travel, music, art, people, mountains, cars, science, etc.). Extract the top 3 keywords from the user's prompt and match against the map; if no match, pick from a broad 'general' pool of at least 10 diverse Mixkit/Coverr MP4s. Display the matched video as an inline `<video>` element with controls, autoplay, and muted immediately after generation. Show a loading state while the video source is being resolved. On video element error (canplaythrough failure / src error), automatically try the next best keyword match before showing a user-facing error with a Retry button. Remove all Pollinations and Pexels API call logic. Save and Share actions must remain available after a video loads.",
+      "reqIds": [
+        "REQ-45"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-stories-feature-on-the-homepage-display-a-horizontally-scrollable-row-of-story-bubbles-at-the-top-of-the-home-screen-above-the-existing-welcome-banner-and-quick-action-cards-each-story-bubble-shows-a-user-avatar-initials-based-and-username-include-at-least-8-placeholder-stories-with-varied-neon-colored-avatar-rings-tapping-a-story-bubble-opens-a-full-screen-story-viewer-modal-showing-a-gradient-background-the-username-a-fake-viewed-x-hours-ago-timestamp-and-a-close-button-apply-the-existing-neon-dark-theme-consistently",
+      "title": "Add a 'Stories' feature on the HomePage: display a horizontally scrollable row of story bubbles at the top of the home screen, above the existing welcome banner and quick-action cards. Each story bubble shows a user avatar (initials-based) and username. Include at least 8 placeholder stories with varied neon-colored avatar rings. Tapping a story bubble opens a full-screen story viewer modal showing a gradient background, the username, a fake 'viewed X hours ago' timestamp, and a close button. Apply the existing neon dark theme consistently.",
+      "reqIds": [
+        "REQ-46"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-trending-topics-section-on-the-homepage-below-the-quick-action-cards-display-a-list-or-grid-of-at-least-8-trending-topic-chips-tags-e-g-ai-space-photography-nature-music-sports-travel-technology-each-chip-should-have-a-neon-colored-border-and-a-subtle-glow-effect-topics-are-static-placeholders-tapping-a-topic-chip-navigates-the-user-to-the-search-page-with-the-topic-pre-filled-in-the-search-input",
+      "title": "Add a 'Trending Topics' section on the HomePage below the quick-action cards. Display a list or grid of at least 8 trending topic chips/tags (e.g., '#AI', '#Space', '#Photography', '#Nature', '#Music', '#Sports', '#Travel', '#Technology'). Each chip should have a neon-colored border and a subtle glow effect. Topics are static placeholders. Tapping a topic chip navigates the user to the Search page with the topic pre-filled in the search input.",
+      "reqIds": [
+        "REQ-47"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-suggested-users-section-on-the-contactspage-or-as-a-widget-on-the-homepage-showing-a-list-of-up-to-6-placeholder-suggested-user-cards-each-card-displays-an-initials-avatar-with-a-neon-colored-ring-a-display-name-a-username-and-an-add-contact-button-the-cards-are-static-placeholder-data-hardcoded-fake-users-the-add-contact-button-shows-a-confirmation-toast-contact-request-sent-apply-the-existing-neon-dark-theme-consistently",
+      "title": "Add a 'Suggested Users' section on the ContactsPage (or as a widget on the HomePage) showing a list of up to 6 placeholder suggested user cards. Each card displays an initials avatar with a neon-colored ring, a display name, a username, and an 'Add Contact' button. The cards are static placeholder data (hardcoded fake users). The 'Add Contact' button shows a confirmation toast ('Contact request sent!'). Apply the existing neon dark theme consistently.",
+      "reqIds": [
+        "REQ-48"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-daily-challenge-widget-on-the-createpage-displayed-above-the-existing-ai-generate-and-upload-media-tabs-the-widget-shows-a-daily-creative-prompt-e-g-today-s-challenge-generate-an-image-of-a-futuristic-city-at-night-with-a-neon-styled-card-include-a-use-this-prompt-button-that-pre-fills-the-ai-image-generator-s-prompt-input-with-the-challenge-text-rotate-through-at-least-10-different-static-challenge-prompts-cycle-daily-using-the-current-date-modulo-the-array-length-apply-the-existing-neon-dark-theme",
+      "title": "Add a 'Daily Challenge' widget on the CreatePage, displayed above the existing AI Generate and Upload Media tabs. The widget shows a daily creative prompt (e.g., 'Today's Challenge: Generate an image of a futuristic city at night') with a neon-styled card. Include a 'Use This Prompt' button that pre-fills the AI image generator's prompt input with the challenge text. Rotate through at least 10 different static challenge prompts (cycle daily using the current date modulo the array length). Apply the existing neon dark theme.",
+      "reqIds": [
+        "REQ-49"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-notification-badge-system-to-the-chat-nav-item-and-contacts-nav-item-in-the-layout-component-s-navigation-both-desktop-sidebar-and-mobile-bottom-nav-display-a-small-neon-colored-numeric-badge-on-the-chat-icon-when-there-are-unread-messages-and-on-the-contacts-icon-when-there-are-pending-contact-requests-derive-unread-message-count-from-existing-message-query-data-and-pending-requests-count-from-existing-contact-request-query-data-if-the-count-is-zero-hide-the-badge-cap-display-at-99-for-counts-above-99",
+      "title": "Add a notification badge system to the Chat nav item and Contacts nav item. In the Layout component's navigation (both desktop sidebar and mobile bottom nav), display a small neon-colored numeric badge on the Chat icon when there are unread messages, and on the Contacts icon when there are pending contact requests. Derive unread message count from existing message query data and pending requests count from existing contact request query data. If the count is zero, hide the badge. Cap display at '99+' for counts above 99.",
+      "reqIds": [
+        "REQ-50"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-restore-the-horizontally-scrollable-stories-row-at-the-top-of-the-homepage-above-the-welcome-banner-and-quick-action-cards-the-stories-row-must-only-display-real-registered-users-who-have-accounts-in-the-app-do-not-show-any-hardcoded-fake-or-placeholder-user-names-avatars-or-profiles-if-no-real-users-exist-or-no-stories-are-available-the-stories-row-should-either-be-hidden-or-show-an-empty-state-never-fake-data",
+      "title": "Restore the horizontally scrollable Stories row at the top of the HomePage (above the welcome banner and quick-action cards). The Stories row must only display real registered users who have accounts in the app. Do not show any hardcoded, fake, or placeholder user names, avatars, or profiles. If no real users exist or no stories are available, the Stories row should either be hidden or show an empty state — never fake data.",
+      "reqIds": [
+        "REQ-51"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-all-hardcoded-fake-placeholder-user-entries-from-the-suggestedusers-component-suggested-user-cards-must-only-show-real-registered-users-fetched-from-the-backend-if-no-real-users-are-available-to-suggest-hide-the-section-or-show-an-empty-state-message-never-display-invented-names-or-profiles",
+      "title": "Remove all hardcoded fake/placeholder user entries from the SuggestedUsers component. Suggested user cards must only show real registered users fetched from the backend. If no real users are available to suggest, hide the section or show an empty state message — never display invented names or profiles.",
+      "reqIds": [
+        "REQ-52"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-redesign-the-design-purchase-flow-so-that-when-a-user-initiates-a-purchase-of-a-design-they-are-first-presented-with-a-customization-step-before-completing-the-purchase-the-customization-step-must-allow-users-to-configure-relevant-options-for-the-selected-design-e-g-colors-sizes-text-materials-or-other-design-specific-parameters-before-the-order-is-confirmed-the-purchase-action-must-not-complete-until-the-user-has-reviewed-and-confirmed-their-customization-choices-the-existing-purchase-confirmation-and-payment-steps-must-remain-intact-and-follow-the-customization-step",
+      "title": "Redesign the design purchase flow so that when a user initiates a purchase of a design, they are first presented with a customization step before completing the purchase. The customization step must allow users to configure relevant options for the selected design (e.g., colors, sizes, text, materials, or other design-specific parameters) before the order is confirmed. The purchase action must not complete until the user has reviewed and confirmed their customization choices. The existing purchase confirmation and payment steps must remain intact and follow the customization step.",
+      "reqIds": [
+        "REQ-53"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-restore-the-original-dark-neon-theme-layout-across-all-pages-and-components-all-screens-login-register-home-chat-contacts-profile-create-search-settings-customizedesign-purchaseconfirmation-must-use-deep-near-black-backgrounds-vibrant-neon-accent-colors-electric-violet-cyan-hot-pink-glowing-ui-elements-animated-text-effects-shimmer-glow-typewriter-gradient-highlights-and-a-sleek-futuristic-layout-ensure-the-css-custom-properties-defined-in-frontend-src-index-css-and-frontend-index-css-for-the-dark-neon-design-system-cyan-pink-violet-green-yellow-accents-are-consistently-applied-re-apply-the-tailwind-dark-theme-tokens-and-neon-color-variables-from-frontend-tailwind-config-js-across-all-components-and-pages-that-may-have-drifted-from-the-intended-dark-style",
+      "title": "Restore the original dark neon theme layout across all pages and components. All screens (Login, Register, Home, Chat, Contacts, Profile, Create, Search, Settings, CustomizeDesign, PurchaseConfirmation) must use deep near-black backgrounds, vibrant neon accent colors (electric violet, cyan, hot pink), glowing UI elements, animated text effects (shimmer, glow, typewriter), gradient highlights, and a sleek futuristic layout. Ensure the CSS custom properties defined in frontend/src/index.css and frontend/index.css for the dark neon design system (cyan, pink, violet, green, yellow accents) are consistently applied. Re-apply the Tailwind dark theme tokens and neon color variables from frontend/tailwind.config.js across all components and pages that may have drifted from the intended dark style.",
+      "reqIds": [
+        "REQ-54"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -479,6 +571,24 @@
     {
       "id": "AR-26",
       "summary": "Fix AI image and video generators — they are showing errors; switch to different working generator APIs/services that actually produce results",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-27",
+      "summary": "AI image and video generators are still broken/failing after latest build — fix generation so both reliably produce results; also expand the app with additional features/content",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-28",
+      "summary": "Restore the stories/story vibe layout at the top of the home screen — do not remove it. Remove fake placeholder profiles/people names from stories; stories should only show real registered users or be empty if no users exist.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-29",
+      "summary": "Fix design purchase flow so users can customize what they want before/when buying a design, not just purchase it as-is",
       "reqIds": [],
       "status": "pending"
     }

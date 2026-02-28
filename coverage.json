@@ -1,46 +1,73 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T21:11:15.070Z",
+  "generatedAt": "2026-02-28T21:56:18.640Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
-        "id": "REQ-41",
-        "summary": "Rewrite the SearchPage to deliver real, broad internet search results for both photo and video tabs. For photo search: use the Unsplash Source URL pattern (https://source.unsplash.com/400x300/?{encodeURIComponent(query)},{index}) as the primary source for a grid of 12 images, with Picsum (https://picsum.photos/seed/{query}-{index}/400/300) as an automatic per-image fallback. For video search: call the Pexels Videos API free tier endpoint (https://api.pexels.com/videos/search?query={encodeURIComponent(query)}&per_page=9&orientation=landscape) using the API key stored in a clearly marked placeholder constant (PEXELS_API_KEY); display each result as an inline playable <video> element with a poster thumbnail; if the Pexels API call fails or returns zero results, fall back to a curated pool of at least 40 keyword-mapped direct MP4 URLs from Mixkit, Coverr, or Pixabay covering diverse categories (nature, sports, travel, animals, food, technology, music, cities, space, etc.). All results must visually correspond to the user's query. Remove all random, hash-based, or hardcoded placeholder logic. Results must remain private — not saved to the user's profile or visible to other users.",
+        "id": "REQ-54",
+        "summary": "Restore the original dark neon theme layout across all pages and components. All screens (Login, Register, Home, Chat, Contacts, Profile, Create, Search, Settings, CustomizeDesign, PurchaseConfirmation) must use deep near-black backgrounds, vibrant neon accent colors (electric violet, cyan, hot pink), glowing UI elements, animated text effects (shimmer, glow, typewriter), gradient highlights, and a sleek futuristic layout. Ensure the CSS custom properties defined in frontend/src/index.css and frontend/index.css for the dark neon design system (cyan, pink, violet, green, yellow accents) are consistently applied. Re-apply the Tailwind dark theme tokens and neon color variables from frontend/tailwind.config.js across all components and pages that may have drifted from the intended dark style.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/SearchPage.tsx"
+          "frontend/src/index.css",
+          "frontend/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/components/Layout.tsx",
+          "frontend/src/pages/LoginPage.tsx",
+          "frontend/src/pages/RegisterPage.tsx",
+          "frontend/src/pages/HomePage.tsx",
+          "frontend/src/pages/ChatPage.tsx",
+          "frontend/src/pages/ContactsPage.tsx",
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/pages/CreatePage.tsx",
+          "frontend/src/pages/SearchPage.tsx",
+          "frontend/src/pages/SettingsPage.tsx",
+          "frontend/src/pages/CustomizeDesignPage.tsx",
+          "frontend/src/pages/PurchaseConfirmationPage.tsx",
+          "frontend/src/components/AnimatedHeading.tsx",
+          "frontend/src/components/StoriesRow.tsx",
+          "frontend/src/components/StoryViewerModal.tsx",
+          "frontend/src/components/SuggestedUsers.tsx",
+          "frontend/src/components/TrendingTopics.tsx",
+          "frontend/src/components/DailyChallengeWidget.tsx",
+          "frontend/src/components/VideoFactsCarousel.tsx",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/components/MessageList.tsx",
+          "frontend/src/components/PhotoGallery.tsx",
+          "frontend/src/components/VideoGallery.tsx",
+          "frontend/src/components/PhotoUploader.tsx",
+          "frontend/src/components/VideoUploader.tsx",
+          "frontend/src/components/ImageGenerator.tsx",
+          "frontend/src/components/VideoGenerator.tsx",
+          "frontend/src/components/DesignCustomizer.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/SearchPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-42",
-        "summary": "Fix the ImageGenerator component so that it reliably produces and displays a real AI-generated image for every prompt. Use the Pollinations AI image generation API (https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?seed={seed}&width=800&height=600&nologo=true) as the sole source. Generate a unique random seed on each generation attempt. On image load error (broken src, network error, or HTTP failure), automatically retry up to 3 times using different seed values (seed+1, seed+2, seed+3) before displaying a clear user-facing error message. Show a visible loading spinner while the image is being fetched. The displayed image must be the actual Pollinations AI result for the user's prompt — no keyword mapping, hash-based selection, or random placeholder logic. Save-to-profile and download actions must remain functional using the final resolved image URL.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/ImageGenerator.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/ImageGenerator.tsx"
-        ]
-      },
-      {
-        "id": "REQ-43",
-        "summary": "Fix the VideoGenerator component so that it reliably produces and displays a real AI-generated or API-matched video for every prompt. Primary approach: call the Pollinations AI video endpoint (https://video.pollinations.ai/prompt/{encodeURIComponent(prompt)}) and display the result as an inline <video> element with controls and autoplay muted. If that endpoint returns an error or no playable content within a reasonable timeout (10 seconds), fall back to the Pexels Videos API free tier (https://api.pexels.com/videos/search?query={encodeURIComponent(prompt)}&per_page=5&orientation=landscape) using an API key stored in a clearly marked placeholder constant (PEXELS_API_KEY); display the first valid SD-quality direct MP4 URL as an inline <video> element. Show a loading spinner during all API calls. On failure of both sources, display a clear user-facing error message with a Retry button. Remove all local keyword-to-video mapping logic. Save and Share actions must remain available after a video is loaded.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/VideoGenerator.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/VideoGenerator.tsx"
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/components/Layout.tsx",
+          "frontend/src/pages/LoginPage.tsx",
+          "frontend/src/pages/RegisterPage.tsx",
+          "frontend/src/pages/HomePage.tsx",
+          "frontend/src/pages/ChatPage.tsx",
+          "frontend/src/pages/ContactsPage.tsx",
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/pages/CreatePage.tsx",
+          "frontend/src/pages/SearchPage.tsx",
+          "frontend/src/pages/SettingsPage.tsx",
+          "frontend/src/components/AnimatedHeading.tsx",
+          "frontend/src/components/StoriesRow.tsx",
+          "frontend/src/components/StoryViewerModal.tsx",
+          "frontend/src/components/SuggestedUsers.tsx",
+          "frontend/src/components/TrendingTopics.tsx",
+          "frontend/src/components/DailyChallengeWidget.tsx",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/components/MessageList.tsx"
         ]
       }
     ]
@@ -50,9 +77,27 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/ImageGenerator.tsx",
-    "frontend/src/components/VideoGenerator.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AnimatedHeading.tsx",
+    "frontend/src/components/DailyChallengeWidget.tsx",
+    "frontend/src/components/Layout.tsx",
+    "frontend/src/components/MessageInput.tsx",
+    "frontend/src/components/MessageList.tsx",
+    "frontend/src/components/StoriesRow.tsx",
+    "frontend/src/components/StoryViewerModal.tsx",
+    "frontend/src/components/SuggestedUsers.tsx",
+    "frontend/src/components/TrendingTopics.tsx",
+    "frontend/src/index.css",
+    "frontend/src/pages/ChatPage.tsx",
+    "frontend/src/pages/ContactsPage.tsx",
+    "frontend/src/pages/CreatePage.tsx",
+    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/pages/LoginPage.tsx",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/pages/RegisterPage.tsx",
     "frontend/src/pages/SearchPage.tsx",
+    "frontend/src/pages/SettingsPage.tsx",
+    "frontend/tailwind.config.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

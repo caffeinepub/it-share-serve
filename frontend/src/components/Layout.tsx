@@ -1,130 +1,193 @@
 import React from 'react';
-import { Outlet, useNavigate, useLocation } from '@tanstack/react-router';
-import { Home, User, Users, MessageCircle, Plus, Search, Settings, Heart } from 'lucide-react';
+import { Link, useLocation } from '@tanstack/react-router';
+import {
+  Home,
+  Search,
+  PlusSquare,
+  MessageCircle,
+  Users,
+  User,
+  Settings,
+  LogOut,
+  Globe,
+} from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useNotificationCounts } from '../hooks/useNotificationCounts';
 
 const navItems = [
-  { path: '/', label: 'Home', icon: Home },
-  { path: '/contacts', label: 'Contacts', icon: Users },
-  { path: '/search', label: 'Search', icon: Search },
-  { path: '/create', label: 'Create', icon: Plus },
-  { path: '/profile', label: 'Profile', icon: User },
-  { path: '/settings', label: 'Settings', icon: Settings },
+  { icon: Home, label: 'Home', path: '/' },
+  { icon: Search, label: 'Search', path: '/search' },
+  { icon: PlusSquare, label: 'Create', path: '/create' },
+  { icon: Users, label: 'Contacts', path: '/contacts' },
+  { icon: User, label: 'Profile', path: '/profile' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
-export default function Layout() {
-  const navigate = useNavigate();
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const { isAuthenticated, username, logout } = useAuth();
+  const { logout, username, isAuthenticated } = useAuth();
+  const { pendingRequests } = useNotificationCounts();
 
   const isPublicRoute = location.pathname === '/login' || location.pathname === '/register';
 
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  // On public routes, just render children without nav
+  if (isPublicRoute || !isAuthenticated) {
+    return <>{children}</>;
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <button
-            onClick={() => navigate({ to: '/' })}
-            className="flex items-center gap-2 font-bold text-lg text-primary hover:opacity-80 transition-opacity"
-          >
-            <img src="/assets/generated/shareserve-logo.dim_256x256.png" alt="ShareServe" className="w-8 h-8 rounded-lg" />
-            <span className="hidden sm:block">ShareServe</span>
-          </button>
-
-          {/* Desktop Nav */}
-          {isAuthenticated && !isPublicRoute && (
-            <nav className="hidden md:flex items-center gap-1">
-              {navItems.map(({ path, label, icon: Icon }) => {
-                const isActive = location.pathname === path;
-                return (
-                  <button
-                    key={path}
-                    onClick={() => navigate({ to: path })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </button>
-                );
-              })}
-            </nav>
-          )}
-
-          <div className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground hidden sm:block">@{username}</span>
-                <button
-                  onClick={logout}
-                  className="text-sm px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : !isPublicRoute ? (
-              <button
-                onClick={() => navigate({ to: '/login' })}
-                className="text-sm px-4 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
-              >
-                Login
-              </button>
-            ) : null}
+    <div className="min-h-screen bg-background flex">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 min-h-screen border-r border-border/50 bg-card/50 backdrop-blur-sm fixed left-0 top-0 bottom-0 z-40">
+        {/* Logo */}
+        <div className="p-6 border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <img src="/assets/generated/shareserve-logo.dim_256x256.png" alt="ShareServe" className="w-10 h-10 rounded-xl" />
+            <span className="font-orbitron font-bold text-xl gradient-neon-text">ShareServe</span>
           </div>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 pb-20 md:pb-0">
-        <Outlet />
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            const showBadge = item.label === 'Contacts' && pendingRequests > 0;
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${
+                  active
+                    ? 'bg-primary/10 text-primary border border-primary/30'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                }`}
+                style={active ? { borderColor: 'var(--neon-cyan)40', boxShadow: '0 0 8px var(--neon-cyan)15' } : {}}
+              >
+                <div className="relative">
+                  <Icon
+                    size={20}
+                    className={active ? 'text-primary' : 'group-hover:text-primary transition-colors'}
+                    style={active ? { color: 'var(--neon-cyan)', filter: 'drop-shadow(0 0 6px var(--neon-cyan))' } : {}}
+                  />
+                  {showBadge && (
+                    <span
+                      className="absolute -top-1.5 -right-1.5 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold"
+                      style={{ backgroundColor: 'var(--neon-pink)', fontSize: '10px' }}
+                    >
+                      {pendingRequests > 9 ? '9+' : pendingRequests}
+                    </span>
+                  )}
+                </div>
+                <span className={`font-medium`} style={active ? { color: 'var(--neon-cyan)' } : {}}>{item.label}</span>
+                {active && (
+                  <div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                    style={{ background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan)' }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User section */}
+        <div className="p-4 border-t border-border/50">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary/30 mb-2">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+              style={{ background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-violet))', color: 'var(--background)' }}
+            >
+              {username ? username[0].toUpperCase() : '?'}
+            </div>
+            <span className="text-sm font-medium text-foreground truncate">{username || 'Guest'}</span>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-3 px-4 py-2 w-full rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
+          >
+            <LogOut size={18} />
+            <span className="text-sm font-medium">Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 md:ml-64 pb-20 md:pb-0 min-h-screen bg-background">
+        {/* Mobile header */}
+        <header className="md:hidden sticky top-0 z-30 bg-card/80 backdrop-blur-md border-b border-border/50 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src="/assets/generated/shareserve-logo.dim_256x256.png" alt="ShareServe" className="w-8 h-8 rounded-lg" />
+            <span className="font-orbitron font-bold text-lg gradient-neon-text">ShareServe</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+              style={{ background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-violet))', color: 'var(--background)' }}
+            >
+              {username ? username[0].toUpperCase() : '?'}
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <div className="w-full">
+          {children}
+        </div>
       </main>
 
-      {/* Mobile Bottom Nav */}
-      {isAuthenticated && !isPublicRoute && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/90 backdrop-blur-md border-t border-border">
-          <div className="flex items-center justify-around px-2 py-2">
-            {navItems.map(({ path, label, icon: Icon }) => {
-              const isActive = location.pathname === path;
-              return (
-                <button
-                  key={path}
-                  onClick={() => navigate({ to: path })}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors ${
-                    isActive
-                      ? 'text-primary'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">{label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-      )}
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-md border-t border-border/50">
+        <div className="flex items-center justify-around px-2 py-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            const showBadge = item.label === 'Contacts' && pendingRequests > 0;
 
-      {/* Footer */}
-      {isPublicRoute && (
-        <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border">
-          <p>
-            Built with <Heart className="inline w-3 h-3 text-primary fill-primary" /> using{' '}
-            <a
-              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'shareserve')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              caffeine.ai
-            </a>
-          </p>
-          <p className="mt-1">© {new Date().getFullYear()} ShareServe. All rights reserved.</p>
-        </footer>
-      )}
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 relative ${
+                  active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <div className="relative">
+                  <Icon
+                    size={22}
+                    style={active ? { color: 'var(--neon-cyan)', filter: 'drop-shadow(0 0 6px var(--neon-cyan))' } : {}}
+                  />
+                  {showBadge && (
+                    <span
+                      className="absolute -top-1.5 -right-1.5 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold"
+                      style={{ backgroundColor: 'var(--neon-pink)', fontSize: '10px' }}
+                    >
+                      {pendingRequests > 9 ? '9+' : pendingRequests}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs font-medium" style={active ? { color: 'var(--neon-cyan)' } : {}}>{item.label}</span>
+                {active && (
+                  <div
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+                    style={{ background: 'var(--neon-cyan)' }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

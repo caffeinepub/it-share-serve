@@ -1,154 +1,177 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { Eye, EyeOff, Zap } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { useLoginUser } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { useActor } from '../hooks/useActor';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const loginMutation = useLoginUser();
+  const { actor } = useActor();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ username?: string; password?: string; general?: string }>({});
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const validate = () => {
-    const newErrors: typeof errors = {};
-    if (!username.trim()) newErrors.username = 'Username is required';
-    if (!password) newErrors.password = 'Password is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-
+    if (!username.trim() || !password.trim()) {
+      setError('Please enter both username and password.');
+      return;
+    }
+    if (!actor) {
+      setError('Connecting to network... please try again.');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
     try {
-      const loggedInUsername = await loginMutation.mutateAsync({ username: username.trim(), password });
-      login(loggedInUsername);
-      navigate({ to: '/' });
+      const success = await actor.loginUser(username.trim(), password);
+      if (success) {
+        login(username.trim());
+        navigate({ to: '/' });
+      } else {
+        setError('Invalid username or password.');
+      }
     } catch (err: any) {
-      setErrors({ general: err.message || 'Login failed. Please try again.' });
+      setError(err?.message || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background glow effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl" style={{ background: 'var(--neon-cyan)' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl" style={{ background: 'var(--neon-violet)' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full opacity-5 blur-3xl" style={{ background: 'var(--neon-pink)' }} />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <img src="/assets/generated/shareserve-logo.dim_256x256.png" alt="ShareServer" className="w-20 h-20 mb-4 rounded-2xl" />
-          <h1 className="text-3xl font-bold text-primary tracking-tight">ShareServer</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Connect, share, and communicate</p>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img
+              src="/assets/generated/shareserve-logo.dim_256x256.png"
+              alt="ShareServe"
+              className="w-16 h-16 rounded-2xl"
+              style={{ boxShadow: '0 0 20px var(--neon-cyan)' }}
+            />
+          </div>
+          <h1 className="font-orbitron font-bold text-3xl gradient-neon-text mb-2">ShareServe</h1>
+          <p className="text-muted-foreground text-sm">Connect. Create. Share.</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
-          <h2 className="text-xl font-semibold text-foreground mb-6">Sign in to your account</h2>
+        {/* Login Card */}
+        <div
+          className="bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-8 shadow-2xl"
+          style={{ boxShadow: '0 0 40px rgba(0,0,0,0.5), 0 0 1px var(--neon-cyan)' }}
+        >
+          <h2 className="text-xl font-semibold text-foreground mb-6 text-center">Welcome Back</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* General error */}
-            {errors.general && (
-              <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">
-                {errors.general}
-              </div>
-            )}
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+              {error}
+            </div>
+          )}
 
-            {/* Username */}
-            <div className="space-y-1.5">
-              <Label htmlFor="username" className="text-foreground">Username</Label>
-              <Input
-                id="username"
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Username</label>
+              <input
                 type="text"
-                placeholder="Enter your username"
                 value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  if (errors.username) setErrors((prev) => ({ ...prev, username: undefined }));
-                }}
-                className={errors.username ? 'border-destructive focus-visible:ring-destructive' : ''}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                className="w-full bg-secondary/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
+                onFocus={(e) => { e.target.style.borderColor = 'var(--neon-cyan)'; e.target.style.boxShadow = '0 0 8px var(--neon-cyan)'; }}
+                onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
                 autoComplete="username"
-                disabled={loginMutation.isPending}
               />
-              {errors.username && <p className="text-destructive text-xs">{errors.username}</p>}
             </div>
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-foreground">Password</Label>
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Password</label>
               <div className="relative">
-                <Input
-                  id="password"
+                <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-                  }}
-                  className={`pr-10 ${errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full bg-secondary/50 border border-border/50 rounded-xl px-4 py-3 pr-12 text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
+                  onFocus={(e) => { e.target.style.borderColor = 'var(--neon-cyan)'; e.target.style.boxShadow = '0 0 8px var(--neon-cyan)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
                   autoComplete="current-password"
-                  disabled={loginMutation.isPending}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.password && <p className="text-destructive text-xs">{errors.password}</p>}
             </div>
 
-            {/* Submit */}
-            <Button
+            <button
               type="submit"
-              className="w-full"
-              disabled={loginMutation.isPending}
+              disabled={isLoading}
+              className="w-full py-3 rounded-xl font-semibold text-background transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+              style={{
+                background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-violet))',
+                boxShadow: isLoading ? 'none' : '0 0 20px var(--neon-cyan)',
+              }}
             >
-              {loginMutation.isPending ? (
+              {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing in…
+                  <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+                  Logging in...
                 </>
               ) : (
-                'Log In'
+                <>
+                  <Zap size={18} />
+                  Login
+                </>
               )}
-            </Button>
+            </button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{' '}
-            <a
-              href="/register"
-              onClick={(e) => { e.preventDefault(); navigate({ to: '/register' }); }}
-              className="text-primary hover:underline font-medium"
-            >
-              Create one
-            </a>
-          </p>
+          <div className="mt-6 text-center">
+            <p className="text-muted-foreground text-sm">
+              Don't have an account?{' '}
+              <button
+                onClick={() => navigate({ to: '/register' })}
+                className="font-medium transition-colors"
+                style={{ color: 'var(--neon-cyan)' }}
+                onMouseEnter={(e) => { (e.target as HTMLElement).style.textShadow = '0 0 8px var(--neon-cyan)'; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.textShadow = ''; }}
+              >
+                Register here
+              </button>
+            </p>
+          </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Built with ❤️ using{' '}
-          <a
-            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline"
-          >
-            caffeine.ai
-          </a>
-        </p>
+        <div className="text-center mt-6">
+          <p className="text-muted-foreground text-xs">
+            Built with <span style={{ color: 'var(--neon-pink)' }}>♥</span> using{' '}
+            <a
+              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+              style={{ color: 'var(--neon-cyan)' }}
+            >
+              caffeine.ai
+            </a>
+          </p>
+          <p className="text-muted-foreground/50 text-xs mt-1">© {new Date().getFullYear()} ShareServe</p>
+        </div>
       </div>
     </div>
   );

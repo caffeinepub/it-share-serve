@@ -1,138 +1,161 @@
-import { useSettings } from '../hooks/useSettings';
+import React from 'react';
+import { Settings, Bell, Play, Moon, Info, LogOut } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Moon, Bell, Play, Shield, Info, Palette } from 'lucide-react';
-
-interface SettingRowProps {
-  icon: React.ReactNode;
-  label: string;
-  description: string;
-  checked: boolean;
-  onToggle: () => void;
-}
-
-function SettingRow({ icon, label, description, checked, onToggle }: SettingRowProps) {
-  return (
-    <div className="flex items-center justify-between py-4">
-      <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-          {icon}
-        </div>
-        <div>
-          <p className="text-sm font-medium text-foreground">{label}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-        </div>
-      </div>
-      <Switch
-        checked={checked}
-        onCheckedChange={onToggle}
-        className="data-[state=checked]:bg-primary"
-      />
-    </div>
-  );
-}
+import { useAuth } from '../hooks/useAuth';
+import { useSettings } from '../hooks/useSettings';
+import AnimatedHeading from '../components/AnimatedHeading';
 
 export default function SettingsPage() {
+  const { logout, username } = useAuth();
   const { settings, toggleSetting } = useSettings();
 
+  const settingItems = [
+    {
+      id: 'darkMode' as const,
+      icon: Moon,
+      label: 'Dark Mode',
+      description: 'Use dark theme across the app',
+      color: 'var(--neon-violet)',
+    },
+    {
+      id: 'notifications' as const,
+      icon: Bell,
+      label: 'Notifications',
+      description: 'Receive push notifications',
+      color: 'var(--neon-cyan)',
+    },
+    {
+      id: 'autoplayVideos' as const,
+      icon: Play,
+      label: 'Autoplay Videos',
+      description: 'Automatically play videos in feed',
+      color: 'var(--neon-pink)',
+    },
+  ];
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground font-orbitron">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your app preferences</p>
-      </div>
-
-      {/* Appearance */}
-      <div className="bg-card border border-border rounded-2xl px-6">
-        <div className="pt-4 pb-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <Palette className="w-3.5 h-3.5" />
-            Appearance
-          </div>
-        </div>
-        <SettingRow
-          icon={<Moon className="w-5 h-5" />}
-          label="Dark Mode"
-          description="Use dark theme across the app"
-          checked={settings.darkMode}
-          onToggle={() => toggleSetting('darkMode')}
+      <div className="px-4 pt-6 pb-4 border-b border-border/50">
+        <AnimatedHeading
+          text="Settings"
+          variant="shimmer"
+          className="text-2xl font-orbitron font-bold mb-1"
         />
+        <p className="text-muted-foreground text-sm">Manage your preferences</p>
       </div>
 
-      {/* Notifications */}
-      <div className="bg-card border border-border rounded-2xl px-6">
-        <div className="pt-4 pb-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <Bell className="w-3.5 h-3.5" />
-            Notifications
+      <div className="px-4 py-6 space-y-6 max-w-2xl">
+        {/* Account Section */}
+        <div>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Account</h2>
+          <div
+            className="bg-card/50 border border-border/30 rounded-2xl p-4 flex items-center gap-3"
+            style={{ borderColor: 'var(--neon-cyan)20' }}
+          >
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0"
+              style={{ background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-violet))', color: 'var(--background)' }}
+            >
+              {username?.[0]?.toUpperCase() || '?'}
+            </div>
+            <div>
+              <div className="font-semibold text-foreground">{username}</div>
+              <div className="text-muted-foreground text-xs">Logged in</div>
+            </div>
           </div>
         </div>
-        <SettingRow
-          icon={<Bell className="w-5 h-5" />}
-          label="Push Notifications"
-          description="Receive alerts for new messages and contact requests"
-          checked={settings.notifications}
-          onToggle={() => toggleSetting('notifications')}
-        />
-      </div>
 
-      {/* Media */}
-      <div className="bg-card border border-border rounded-2xl px-6">
-        <div className="pt-4 pb-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <Play className="w-3.5 h-3.5" />
-            Media
+        {/* Preferences Section */}
+        <div>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Preferences</h2>
+          <div className="bg-card/50 border border-border/30 rounded-2xl overflow-hidden" style={{ borderColor: 'var(--neon-violet)20' }}>
+            {settingItems.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 p-4 ${index < settingItems.length - 1 ? 'border-b border-border/30' : ''}`}
+                >
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: `${item.color}15`, border: `1px solid ${item.color}30` }}
+                  >
+                    <Icon size={18} style={{ color: item.color }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-foreground text-sm">{item.label}</div>
+                    <div className="text-muted-foreground text-xs">{item.description}</div>
+                  </div>
+                  <Switch
+                    checked={settings[item.id]}
+                    onCheckedChange={() => toggleSetting(item.id)}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
-        <SettingRow
-          icon={<Play className="w-5 h-5" />}
-          label="Autoplay Videos"
-          description="Automatically play videos when they appear in your feed"
-          checked={settings.autoplayVideos}
-          onToggle={() => toggleSetting('autoplayVideos')}
-        />
-      </div>
 
-      {/* About */}
-      <div className="bg-card border border-border rounded-2xl px-6">
-        <div className="pt-4 pb-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <Info className="w-3.5 h-3.5" />
-            About
+        {/* About Section */}
+        <div>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">About</h2>
+          <div
+            className="bg-card/50 border border-border/30 rounded-2xl p-4"
+            style={{ borderColor: 'var(--neon-pink)20' }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: 'var(--neon-pink)15', border: '1px solid var(--neon-pink)30' }}
+              >
+                <Info size={18} style={{ color: 'var(--neon-pink)' }} />
+              </div>
+              <div>
+                <div className="font-medium text-foreground text-sm">ShareServe</div>
+                <div className="text-muted-foreground text-xs">Version 1.0.0</div>
+              </div>
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              A decentralized social media platform built on the Internet Computer. Share photos, videos, and connect with friends.
+            </p>
           </div>
         </div>
-        <div className="py-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Version</span>
-            <span className="text-sm font-medium text-foreground">1.0.0</span>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Platform</span>
-            <span className="text-sm font-medium text-foreground">Internet Computer</span>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Built with</span>
+
+        {/* Logout */}
+        <div>
+          <button
+            onClick={logout}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium transition-all duration-200 border"
+            style={{
+              borderColor: 'var(--destructive)40',
+              color: 'var(--destructive)',
+              background: 'var(--destructive)10',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--destructive)20'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--destructive)10'; }}
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center pt-4 pb-8">
+          <p className="text-muted-foreground text-xs">
+            Built with <span style={{ color: 'var(--neon-pink)' }}>♥</span> using{' '}
             <a
               href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium text-primary hover:underline"
+              className="hover:underline"
+              style={{ color: 'var(--neon-cyan)' }}
             >
               caffeine.ai
             </a>
-          </div>
+          </p>
+          <p className="text-muted-foreground/50 text-xs mt-1">© {new Date().getFullYear()} ShareServe</p>
         </div>
-      </div>
-
-      {/* Privacy note */}
-      <div className="flex items-start gap-3 bg-primary/5 border border-primary/20 rounded-xl p-4">
-        <Shield className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-        <p className="text-xs text-muted-foreground">
-          Your settings are stored locally on your device and are never sent to any server.
-        </p>
       </div>
     </div>
   );

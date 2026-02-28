@@ -1,42 +1,22 @@
-import { useState, useRef } from 'react';
-import { Send, Image, Video, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Send, Paperclip } from 'lucide-react';
 
 interface MessageInputProps {
-  onSendMessage: (text: string) => Promise<void>;
-  onSendPhoto: (file: File) => Promise<void>;
-  onSendVideo: (file: File) => Promise<void>;
-  isSending: boolean;
+  onSend: (text: string) => void;
+  isLoading?: boolean;
 }
 
-export default function MessageInput({ onSendMessage, onSendPhoto, onSendVideo, isSending }: MessageInputProps) {
+export default function MessageInput({ onSend, isLoading = false }: MessageInputProps) {
   const [text, setText] = useState('');
-  const [selectedFile, setSelectedFile] = useState<{ file: File; type: 'photo' | 'video' } | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSend = async () => {
-    if (selectedFile) {
-      setIsUploading(true);
-      try {
-        if (selectedFile.type === 'photo') {
-          await onSendPhoto(selectedFile.file);
-        } else {
-          await onSendVideo(selectedFile.file);
-        }
-        setSelectedFile(null);
-        setPreviewUrl(null);
-      } finally {
-        setIsUploading(false);
-      }
-      return;
-    }
-
-    if (!text.trim()) return;
-    const msg = text.trim();
+  const handleSend = () => {
+    if (!text.trim() || isLoading) return;
+    onSend(text.trim());
     setText('');
-    await onSendMessage(msg);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -46,97 +26,54 @@ export default function MessageInput({ onSendMessage, onSendPhoto, onSendVideo, 
     }
   };
 
-  const handleFileSelect = (file: File, type: 'photo' | 'video') => {
-    setSelectedFile({ file, type });
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+  const handleInput = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    }
   };
-
-  const clearFile = () => {
-    setSelectedFile(null);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
-  };
-
-  const isDisabled = isSending || isUploading;
 
   return (
-    <div className="p-3">
-      {/* File Preview */}
-      {selectedFile && previewUrl && (
-        <div className="mb-3 relative inline-block">
-          {selectedFile.type === 'photo' ? (
-            <img src={previewUrl} alt="Preview" className="h-20 w-20 object-cover rounded-xl border border-neon-violet/30" />
-          ) : (
-            <video src={previewUrl} className="h-20 w-20 object-cover rounded-xl border border-neon-cyan/30" />
-          )}
-          <button
-            onClick={clearFile}
-            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive flex items-center justify-center"
-          >
-            <X className="w-3 h-3 text-white" />
-          </button>
-        </div>
-      )}
+    <div className="flex items-end gap-2 p-3">
+      <button
+        className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all duration-200 shrink-0"
+        title="Attach file"
+      >
+        <Paperclip size={18} />
+      </button>
 
-      <div className="flex items-end gap-2">
-        {/* Photo Button */}
-        <button
-          onClick={() => photoInputRef.current?.click()}
-          disabled={isDisabled}
-          className="w-9 h-9 rounded-xl border border-neon-violet/30 flex items-center justify-center text-neon-violet hover:bg-neon-violet/10 transition-all disabled:opacity-50 flex-shrink-0"
-        >
-          <Image className="w-4 h-4" />
-        </button>
-        <input
-          ref={photoInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'photo')}
-        />
-
-        {/* Video Button */}
-        <button
-          onClick={() => videoInputRef.current?.click()}
-          disabled={isDisabled}
-          className="w-9 h-9 rounded-xl border border-neon-cyan/30 flex items-center justify-center text-neon-cyan hover:bg-neon-cyan/10 transition-all disabled:opacity-50 flex-shrink-0"
-        >
-          <Video className="w-4 h-4" />
-        </button>
-        <input
-          ref={videoInputRef}
-          type="file"
-          accept="video/*"
-          className="hidden"
-          onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0], 'video')}
-        />
-
-        {/* Text Input */}
+      <div className="flex-1 relative">
         <textarea
+          ref={textareaRef}
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={selectedFile ? 'Add a caption...' : 'Type a message...'}
-          disabled={isDisabled}
+          onInput={handleInput}
+          placeholder="Type a message..."
           rows={1}
-          className="input-neon flex-1 rounded-xl px-4 py-2.5 text-sm resize-none min-h-[40px] max-h-[120px] disabled:opacity-50"
-          style={{ height: 'auto' }}
+          className="w-full bg-secondary/50 border border-border/50 rounded-xl px-4 py-2.5 text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200 resize-none"
+          onFocus={(e) => { e.target.style.borderColor = 'var(--neon-cyan)'; e.target.style.boxShadow = '0 0 8px var(--neon-cyan)'; }}
+          onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
+          style={{ minHeight: '42px', maxHeight: '120px' }}
         />
-
-        {/* Send Button */}
-        <button
-          onClick={handleSend}
-          disabled={isDisabled || (!text.trim() && !selectedFile)}
-          className="w-9 h-9 rounded-xl btn-neon-violet flex items-center justify-center flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isDisabled ? (
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
-        </button>
       </div>
+
+      <button
+        onClick={handleSend}
+        disabled={!text.trim() || isLoading}
+        className="p-2.5 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        style={{
+          background: text.trim() ? 'linear-gradient(135deg, var(--neon-cyan), var(--neon-violet))' : 'var(--secondary)',
+          color: text.trim() ? 'var(--background)' : 'var(--muted-foreground)',
+          boxShadow: text.trim() ? '0 0 10px var(--neon-cyan)40' : 'none',
+        }}
+      >
+        {isLoading ? (
+          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <Send size={18} />
+        )}
+      </button>
     </div>
   );
 }

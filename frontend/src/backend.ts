@@ -140,7 +140,8 @@ export interface backendInterface {
     getProfileByPrincipal(user: Principal): Promise<UserProfile | null>;
     getUserPhotoFeed(username: Username): Promise<Array<ExternalBlob>>;
     getUserPhotos(username: Username): Promise<Array<ExternalBlob>>;
-    getUserProfile(username: Username): Promise<UserProfile>;
+    getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserProfileByUsername(username: Username): Promise<UserProfile>;
     getUserVideoFeed(username: Username): Promise<Array<ExternalBlob>>;
     getUserVideos(username: Username): Promise<Array<ExternalBlob>>;
     isCallerAdmin(): Promise<boolean>;
@@ -464,17 +465,31 @@ export class Backend implements backendInterface {
             return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getUserProfile(arg0: Username): Promise<UserProfile> {
+    async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return result;
+                return from_candid_opt_n11(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
+            return from_candid_opt_n11(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getUserProfileByUsername(arg0: Username): Promise<UserProfile> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUserProfileByUsername(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUserProfileByUsername(arg0);
             return result;
         }
     }

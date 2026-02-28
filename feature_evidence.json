@@ -2,10 +2,29 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-rewrite-the-searchpage-to-deliver-real-broad-internet-search-results-for-both-photo-and-video-tabs-for-photo-search-use-the-unsplash-source-url-pattern-https-source-unsplash-com-400x300-encodeuricomponent-query-index-as-the-primary-source-for-a-grid-of-12-images-with-picsum-https-picsum-photos-seed-query-index-400-300-as-an-automatic-per-image-fallback-for-video-search-call-the-pexels-videos-api-free-tier-endpoint-https-api-pexels-com-videos-search-query-encodeuricomponent-query-per-page-9-orientation-landscape-using-the-api-key-stored-in-a-clearly-marked-placeholder-constant-pexels-api-key-display-each-result-as-an-inline-playable-video-element-with-a-poster-thumbnail-if-the-pexels-api-call-fails-or-returns-zero-results-fall-back-to-a-curated-pool-of-at-least-40-keyword-mapped-direct-mp4-urls-from-mixkit-coverr-or-pixabay-covering-diverse-categories-nature-sports-travel-animals-food-technology-music-cities-space-etc-all-results-must-visually-correspond-to-the-user-s-query-remove-all-random-hash-based-or-hardcoded-placeholder-logic-results-must-remain-private-not-saved-to-the-user-s-profile-or-visible-to-other-users",
-      "featureTitle": "Rewrite the SearchPage to deliver real, broad internet search results for both photo and video tabs. For photo search: use the Unsplash Source URL pattern (https://source.unsplash.com/400x300/?{encodeURIComponent(query)},{index}) as the primary source for a grid of 12 images, with Picsum (https://picsum.photos/seed/{query}-{index}/400/300) as an automatic per-image fallback. For video search: call the Pexels Videos API free tier endpoint (https://api.pexels.com/videos/search?query={encodeURIComponent(query)}&per_page=9&orientation=landscape) using the API key stored in a clearly marked placeholder constant (PEXELS_API_KEY); display each result as an inline playable <video> element with a poster thumbnail; if the Pexels API call fails or returns zero results, fall back to a curated pool of at least 40 keyword-mapped direct MP4 URLs from Mixkit, Coverr, or Pixabay covering diverse categories (nature, sports, travel, animals, food, technology, music, cities, space, etc.). All results must visually correspond to the user's query. Remove all random, hash-based, or hardcoded placeholder logic. Results must remain private — not saved to the user's profile or visible to other users.",
+      "featureId": "feature-restore-the-original-dark-neon-theme-layout-across-all-pages-and-components-all-screens-login-register-home-chat-contacts-profile-create-search-settings-customizedesign-purchaseconfirmation-must-use-deep-near-black-backgrounds-vibrant-neon-accent-colors-electric-violet-cyan-hot-pink-glowing-ui-elements-animated-text-effects-shimmer-glow-typewriter-gradient-highlights-and-a-sleek-futuristic-layout-ensure-the-css-custom-properties-defined-in-frontend-src-index-css-and-frontend-index-css-for-the-dark-neon-design-system-cyan-pink-violet-green-yellow-accents-are-consistently-applied-re-apply-the-tailwind-dark-theme-tokens-and-neon-color-variables-from-frontend-tailwind-config-js-across-all-components-and-pages-that-may-have-drifted-from-the-intended-dark-style",
+      "featureTitle": "Restore the original dark neon theme layout across all pages and components. All screens (Login, Register, Home, Chat, Contacts, Profile, Create, Search, Settings, CustomizeDesign, PurchaseConfirmation) must use deep near-black backgrounds, vibrant neon accent colors (electric violet, cyan, hot pink), glowing UI elements, animated text effects (shimmer, glow, typewriter), gradient highlights, and a sleek futuristic layout. Ensure the CSS custom properties defined in frontend/src/index.css and frontend/index.css for the dark neon design system (cyan, pink, violet, green, yellow accents) are consistently applied. Re-apply the Tailwind dark theme tokens and neon color variables from frontend/tailwind.config.js across all components and pages that may have drifted from the intended dark style.",
       "files": [
-        "frontend/src/pages/SearchPage.tsx"
+        "frontend/src/components/AnimatedHeading.tsx",
+        "frontend/src/components/DailyChallengeWidget.tsx",
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/components/MessageInput.tsx",
+        "frontend/src/components/MessageList.tsx",
+        "frontend/src/components/StoriesRow.tsx",
+        "frontend/src/components/StoryViewerModal.tsx",
+        "frontend/src/components/SuggestedUsers.tsx",
+        "frontend/src/components/TrendingTopics.tsx",
+        "frontend/src/index.css",
+        "frontend/src/pages/ChatPage.tsx",
+        "frontend/src/pages/ContactsPage.tsx",
+        "frontend/src/pages/CreatePage.tsx",
+        "frontend/src/pages/HomePage.tsx",
+        "frontend/src/pages/LoginPage.tsx",
+        "frontend/src/pages/ProfilePage.tsx",
+        "frontend/src/pages/RegisterPage.tsx",
+        "frontend/src/pages/SearchPage.tsx",
+        "frontend/src/pages/SettingsPage.tsx",
+        "frontend/tailwind.config.js"
       ],
       "components": [
         "authorization@4.0.0",
@@ -17,47 +36,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-41"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-the-imagegenerator-component-so-that-it-reliably-produces-and-displays-a-real-ai-generated-image-for-every-prompt-use-the-pollinations-ai-image-generation-api-https-image-pollinations-ai-prompt-encodeuricomponent-prompt-seed-seed-width-800-height-600-nologo-true-as-the-sole-source-generate-a-unique-random-seed-on-each-generation-attempt-on-image-load-error-broken-src-network-error-or-http-failure-automatically-retry-up-to-3-times-using-different-seed-values-seed-1-seed-2-seed-3-before-displaying-a-clear-user-facing-error-message-show-a-visible-loading-spinner-while-the-image-is-being-fetched-the-displayed-image-must-be-the-actual-pollinations-ai-result-for-the-user-s-prompt-no-keyword-mapping-hash-based-selection-or-random-placeholder-logic-save-to-profile-and-download-actions-must-remain-functional-using-the-final-resolved-image-url",
-      "featureTitle": "Fix the ImageGenerator component so that it reliably produces and displays a real AI-generated image for every prompt. Use the Pollinations AI image generation API (https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?seed={seed}&width=800&height=600&nologo=true) as the sole source. Generate a unique random seed on each generation attempt. On image load error (broken src, network error, or HTTP failure), automatically retry up to 3 times using different seed values (seed+1, seed+2, seed+3) before displaying a clear user-facing error message. Show a visible loading spinner while the image is being fetched. The displayed image must be the actual Pollinations AI result for the user's prompt — no keyword mapping, hash-based selection, or random placeholder logic. Save-to-profile and download actions must remain functional using the final resolved image URL.",
-      "files": [
-        "frontend/src/components/ImageGenerator.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-42"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-the-videogenerator-component-so-that-it-reliably-produces-and-displays-a-real-ai-generated-or-api-matched-video-for-every-prompt-primary-approach-call-the-pollinations-ai-video-endpoint-https-video-pollinations-ai-prompt-encodeuricomponent-prompt-and-display-the-result-as-an-inline-video-element-with-controls-and-autoplay-muted-if-that-endpoint-returns-an-error-or-no-playable-content-within-a-reasonable-timeout-10-seconds-fall-back-to-the-pexels-videos-api-free-tier-https-api-pexels-com-videos-search-query-encodeuricomponent-prompt-per-page-5-orientation-landscape-using-an-api-key-stored-in-a-clearly-marked-placeholder-constant-pexels-api-key-display-the-first-valid-sd-quality-direct-mp4-url-as-an-inline-video-element-show-a-loading-spinner-during-all-api-calls-on-failure-of-both-sources-display-a-clear-user-facing-error-message-with-a-retry-button-remove-all-local-keyword-to-video-mapping-logic-save-and-share-actions-must-remain-available-after-a-video-is-loaded",
-      "featureTitle": "Fix the VideoGenerator component so that it reliably produces and displays a real AI-generated or API-matched video for every prompt. Primary approach: call the Pollinations AI video endpoint (https://video.pollinations.ai/prompt/{encodeURIComponent(prompt)}) and display the result as an inline <video> element with controls and autoplay muted. If that endpoint returns an error or no playable content within a reasonable timeout (10 seconds), fall back to the Pexels Videos API free tier (https://api.pexels.com/videos/search?query={encodeURIComponent(prompt)}&per_page=5&orientation=landscape) using an API key stored in a clearly marked placeholder constant (PEXELS_API_KEY); display the first valid SD-quality direct MP4 URL as an inline <video> element. Show a loading spinner during all API calls. On failure of both sources, display a clear user-facing error message with a Retry button. Remove all local keyword-to-video mapping logic. Save and Share actions must remain available after a video is loaded.",
-      "files": [
-        "frontend/src/components/VideoGenerator.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-43"
+        "REQ-54"
       ],
       "confidence": "high"
     }

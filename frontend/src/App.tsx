@@ -1,5 +1,5 @@
 import React from 'react';
-import { createRouter, createRoute, createRootRoute, RouterProvider, redirect } from '@tanstack/react-router';
+import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet } from '@tanstack/react-router';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -10,11 +10,21 @@ import ChatPage from './pages/ChatPage';
 import CreatePage from './pages/CreatePage';
 import SearchPage from './pages/SearchPage';
 import SettingsPage from './pages/SettingsPage';
-import { useAuth } from './hooks/useAuth';
+import CustomizeDesignPage from './pages/CustomizeDesignPage';
+import PurchaseConfirmationPage from './pages/PurchaseConfirmationPage';
+
+// Root layout wrapper using Outlet
+function RootLayout() {
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
+}
 
 // Root route with layout
 const rootRoute = createRootRoute({
-  component: Layout,
+  component: RootLayout,
 });
 
 // Public routes
@@ -73,6 +83,18 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const customizeDesignRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/customize-design/$designId',
+  component: CustomizeDesignPage,
+});
+
+const purchaseConfirmationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/purchase-confirmation',
+  component: PurchaseConfirmationPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
@@ -83,6 +105,8 @@ const routeTree = rootRoute.addChildren([
   createRoute_,
   searchRoute,
   settingsRoute,
+  customizeDesignRoute,
+  purchaseConfirmationRoute,
 ]);
 
 const router = createRouter({ routeTree });

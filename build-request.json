@@ -1,85 +1,42 @@
 {
   "kind": "build_request",
-  "title": "Fix Search (real internet results) and AI generators",
-  "projectName": "ShareServe",
-  "priority": "high",
+  "title": "Restore original dark neon theme layout across all screens",
+  "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-41",
-      "text": "Rewrite the SearchPage to deliver real, broad internet search results for both photo and video tabs. For photo search: use the Unsplash Source URL pattern (https://source.unsplash.com/400x300/?{encodeURIComponent(query)},{index}) as the primary source for a grid of 12 images, with Picsum (https://picsum.photos/seed/{query}-{index}/400/300) as an automatic per-image fallback. For video search: call the Pexels Videos API free tier endpoint (https://api.pexels.com/videos/search?query={encodeURIComponent(query)}&per_page=9&orientation=landscape) using the API key stored in a clearly marked placeholder constant (PEXELS_API_KEY); display each result as an inline playable <video> element with a poster thumbnail; if the Pexels API call fails or returns zero results, fall back to a curated pool of at least 40 keyword-mapped direct MP4 URLs from Mixkit, Coverr, or Pixabay covering diverse categories (nature, sports, travel, animals, food, technology, music, cities, space, etc.). All results must visually correspond to the user's query. Remove all random, hash-based, or hardcoded placeholder logic. Results must remain private — not saved to the user's profile or visible to other users.",
+      "id": "REQ-54",
+      "text": "Restore the original dark neon theme layout across all pages and components. All screens (Login, Register, Home, Chat, Contacts, Profile, Create, Search, Settings, CustomizeDesign, PurchaseConfirmation) must use deep near-black backgrounds, vibrant neon accent colors (electric violet, cyan, hot pink), glowing UI elements, animated text effects (shimmer, glow, typewriter), gradient highlights, and a sleek futuristic layout. Ensure the CSS custom properties defined in frontend/src/index.css and frontend/index.css for the dark neon design system (cyan, pink, violet, green, yellow accents) are consistently applied. Re-apply the Tailwind dark theme tokens and neon color variables from frontend/tailwind.config.js across all components and pages that may have drifted from the intended dark style.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "I want everything on the entire internet on the search"
+          "Go back to the old dark layout of the website"
         ]
       },
       "acceptanceCriteria": [
-        "Typing a query in the photo tab and submitting returns a grid of 12 images that are visually relevant to the query.",
-        "Each photo image attempts to load from Unsplash source URL first, then falls back to Picsum if the primary fails — no broken image icons.",
-        "Typing a query in the video tab and submitting returns up to 9 inline playable <video> elements relevant to the query.",
-        "If the Pexels API key is missing or the call fails, keyword-matched fallback MP4 videos are shown instead of an error.",
-        "No search result is saved to the user's profile or visible to other users.",
-        "No random or query-unrelated placeholder content is ever shown."
-      ]
-    },
-    {
-      "id": "REQ-42",
-      "text": "Fix the ImageGenerator component so that it reliably produces and displays a real AI-generated image for every prompt. Use the Pollinations AI image generation API (https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?seed={seed}&width=800&height=600&nologo=true) as the sole source. Generate a unique random seed on each generation attempt. On image load error (broken src, network error, or HTTP failure), automatically retry up to 3 times using different seed values (seed+1, seed+2, seed+3) before displaying a clear user-facing error message. Show a visible loading spinner while the image is being fetched. The displayed image must be the actual Pollinations AI result for the user's prompt — no keyword mapping, hash-based selection, or random placeholder logic. Save-to-profile and download actions must remain functional using the final resolved image URL.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "the ai don't work at all"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Submitting any text prompt triggers a visible loading spinner.",
-        "A Pollinations AI image URL constructed from the prompt and a random seed is used as the <img> src.",
-        "If the image fails to load, the component automatically retries up to 3 times with different seed values before showing an error message.",
-        "The displayed image visually corresponds to the user's prompt.",
-        "No keyword mapping, hash-based, or random-placeholder logic exists in the component.",
-        "The Save to Profile and Download buttons remain functional using the resolved image URL."
-      ]
-    },
-    {
-      "id": "REQ-43",
-      "text": "Fix the VideoGenerator component so that it reliably produces and displays a real AI-generated or API-matched video for every prompt. Primary approach: call the Pollinations AI video endpoint (https://video.pollinations.ai/prompt/{encodeURIComponent(prompt)}) and display the result as an inline <video> element with controls and autoplay muted. If that endpoint returns an error or no playable content within a reasonable timeout (10 seconds), fall back to the Pexels Videos API free tier (https://api.pexels.com/videos/search?query={encodeURIComponent(prompt)}&per_page=5&orientation=landscape) using an API key stored in a clearly marked placeholder constant (PEXELS_API_KEY); display the first valid SD-quality direct MP4 URL as an inline <video> element. Show a loading spinner during all API calls. On failure of both sources, display a clear user-facing error message with a Retry button. Remove all local keyword-to-video mapping logic. Save and Share actions must remain available after a video is loaded.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "the ai don't work at all"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Submitting any text prompt triggers a visible loading spinner.",
-        "The component first attempts the Pollinations AI video endpoint with the user's prompt.",
-        "If Pollinations fails or times out, the component falls back to the Pexels Videos API using the prompt as the search query.",
-        "The first valid video result is displayed as an inline playable <video> element with controls immediately after generation completes.",
-        "No saving or downloading is required to watch the video inline.",
-        "If both sources fail, a user-facing error message with a Retry button is shown.",
-        "No local keyword-to-video mapping exists in the component.",
-        "Save and Share buttons remain functional once a video is loaded."
+        "All pages render with deep near-black backgrounds (no light or white backgrounds visible).",
+        "Neon accent colors (cyan, violet, hot pink) are consistently applied to buttons, borders, headings, and interactive elements across all screens.",
+        "Glowing UI elements and gradient highlights are visible on cards, nav items, and action buttons.",
+        "Navigation (desktop sidebar and mobile bottom nav) uses the dark neon theme with no light-mode styling.",
+        "Login and Register pages display the neon dark theme with styled form fields and neon-colored call-to-action buttons.",
+        "The Settings, Profile, Create, Search, Chat, Contacts, Home, CustomizeDesign, and PurchaseConfirmation pages all render consistently in the dark neon style.",
+        "Animated text effects (shimmer, glow, or typewriter) are present where previously applied (e.g., AnimatedHeading component usage).",
+        "No page or component defaults to a light or unstyled white background."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "All search results must remain private — never persisted to user profiles or visible to other users.",
-    "All API keys (Pexels) must be stored in clearly marked placeholder constants, not hardcoded secrets."
+    "Do not modify files listed under frontend.immutablePaths (useInternetIdentity.ts, useActor.ts, main.tsx, components/ui).",
+    "Do not alter backend logic or data models.",
+    "Do not remove or break any existing features while restoring the theme."
   ],
   "nonGoals": [
-    "Adding any new navigation tabs or pages.",
-    "Changing the backend schema or Motoko actor.",
-    "Integrating any paid or authenticated AI video service beyond the specified endpoints.",
-    "Displaying search results on user profiles or in chat."
+    "Adding new features or pages.",
+    "Changing the color palette to anything other than the existing neon dark scheme (deep blacks, cyan, violet, hot pink).",
+    "Modifying backend Motoko code.",
+    "Changing authentication logic."
   ],
   "imageRequirements": {
     "required": [],

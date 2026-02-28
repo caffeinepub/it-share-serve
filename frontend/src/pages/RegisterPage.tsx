@@ -1,242 +1,264 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { useRegisterUser, useLoginUser } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { useActor } from '../hooks/useActor';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const registerMutation = useRegisterUser();
-  const loginMutation = useLoginUser();
+  const { actor } = useActor();
 
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     username: '',
+    displayName: '',
     password: '',
     confirmPassword: '',
-    displayName: '',
     bio: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const updateField = (field: string, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => { const e = { ...prev }; delete e[field]; return e; });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    if (!form.username.trim()) newErrors.username = 'Username is required';
-    else if (form.username.trim().length < 3) newErrors.username = 'Username must be at least 3 characters';
-    if (!form.password) newErrors.password = 'Password is required';
-    else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (!form.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
-    else if (form.password !== form.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-    if (!form.displayName.trim()) newErrors.displayName = 'Display name is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    const { username, displayName, password, confirmPassword, bio } = formData;
 
+    if (!username.trim() || !displayName.trim() || !password.trim()) {
+      setError('Username, display name, and password are required.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (!actor) {
+      setError('Connecting to network... please try again.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
     try {
-      await registerMutation.mutateAsync({
-        username: form.username.trim(),
-        password: form.password,
-        displayName: form.displayName.trim(),
-        bio: form.bio.trim(),
-      });
-
-      // Auto-login after registration
-      const loggedInUsername = await loginMutation.mutateAsync({
-        username: form.username.trim(),
-        password: form.password,
-      });
-      login(loggedInUsername);
+      await actor.registerUser(username.trim(), password, displayName.trim(), bio.trim());
+      login(username.trim());
       navigate({ to: '/' });
     } catch (err: any) {
-      const msg: string = err.message || '';
-      if (msg.toLowerCase().includes('username already taken') || msg.toLowerCase().includes('already taken')) {
-        setErrors({ username: 'This username is already taken. Please choose another.' });
+      const msg = err?.message || '';
+      if (msg.includes('already taken')) {
+        setError('Username is already taken. Please choose another.');
       } else {
-        setErrors({ general: msg || 'Registration failed. Please try again.' });
+        setError(msg || 'Registration failed. Please try again.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const isPending = registerMutation.isPending || loginMutation.isPending;
+  const inputFocusStyle = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.target.style.borderColor = 'var(--neon-violet)';
+    e.target.style.boxShadow = '0 0 8px var(--neon-violet)';
+  };
+  const inputBlurStyle = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.target.style.borderColor = '';
+    e.target.style.boxShadow = '';
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background glow effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl" style={{ background: 'var(--neon-violet)' }} />
+        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl" style={{ background: 'var(--neon-pink)' }} />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <img src="/assets/generated/shareserve-logo.dim_256x256.png" alt="ShareServer" className="w-20 h-20 mb-4 rounded-2xl" />
-          <h1 className="text-3xl font-bold text-primary tracking-tight">ShareServer</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Connect, share, and communicate</p>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img
+              src="/assets/generated/shareserve-logo.dim_256x256.png"
+              alt="ShareServe"
+              className="w-16 h-16 rounded-2xl"
+              style={{ boxShadow: '0 0 20px var(--neon-violet)' }}
+            />
+          </div>
+          <h1 className="font-orbitron font-bold text-3xl gradient-neon-text mb-2">ShareServe</h1>
+          <p className="text-muted-foreground text-sm">Join the community</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
-          <h2 className="text-xl font-semibold text-foreground mb-6">Create your account</h2>
+        {/* Register Card */}
+        <div
+          className="bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-8 shadow-2xl"
+          style={{ boxShadow: '0 0 40px rgba(0,0,0,0.5), 0 0 1px var(--neon-violet)' }}
+        >
+          <h2 className="text-xl font-semibold text-foreground mb-6 text-center">Create Account</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* General error */}
-            {errors.general && (
-              <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3">
-                {errors.general}
-              </div>
-            )}
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+              {error}
+            </div>
+          )}
 
-            {/* Username */}
-            <div className="space-y-1.5">
-              <Label htmlFor="username" className="text-foreground">Username</Label>
-              <Input
-                id="username"
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Username</label>
+              <input
                 type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
                 placeholder="Choose a username"
-                value={form.username}
-                onChange={(e) => updateField('username', e.target.value)}
-                className={errors.username ? 'border-destructive focus-visible:ring-destructive' : ''}
+                className="w-full bg-secondary/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
+                onFocus={inputFocusStyle}
+                onBlur={inputBlurStyle}
                 autoComplete="username"
-                disabled={isPending}
               />
-              {errors.username && <p className="text-destructive text-xs">{errors.username}</p>}
             </div>
 
-            {/* Display Name */}
-            <div className="space-y-1.5">
-              <Label htmlFor="displayName" className="text-foreground">Display Name</Label>
-              <Input
-                id="displayName"
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Display Name</label>
+              <input
                 type="text"
-                placeholder="Your full name or nickname"
-                value={form.displayName}
-                onChange={(e) => updateField('displayName', e.target.value)}
-                className={errors.displayName ? 'border-destructive focus-visible:ring-destructive' : ''}
+                name="displayName"
+                value={formData.displayName}
+                onChange={handleChange}
+                placeholder="Your display name"
+                className="w-full bg-secondary/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
+                onFocus={inputFocusStyle}
+                onBlur={inputBlurStyle}
                 autoComplete="name"
-                disabled={isPending}
               />
-              {errors.displayName && <p className="text-destructive text-xs">{errors.displayName}</p>}
             </div>
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-foreground">Password</Label>
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Password</label>
               <div className="relative">
-                <Input
-                  id="password"
+                <input
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="Create a password"
-                  value={form.password}
-                  onChange={(e) => updateField('password', e.target.value)}
-                  className={`pr-10 ${errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className="w-full bg-secondary/50 border border-border/50 rounded-xl px-4 py-3 pr-12 text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
+                  onFocus={inputFocusStyle}
+                  onBlur={inputBlurStyle}
                   autoComplete="new-password"
-                  disabled={isPending}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.password && <p className="text-destructive text-xs">{errors.password}</p>}
             </div>
 
-            {/* Confirm Password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Confirm Password</label>
               <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirm ? 'text' : 'password'}
-                  placeholder="Repeat your password"
-                  value={form.confirmPassword}
-                  onChange={(e) => updateField('confirmPassword', e.target.value)}
-                  className={`pr-10 ${errors.confirmPassword ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm your password"
+                  className="w-full bg-secondary/50 border border-border/50 rounded-xl px-4 py-3 pr-12 text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200"
+                  onFocus={inputFocusStyle}
+                  onBlur={inputBlurStyle}
                   autoComplete="new-password"
-                  disabled={isPending}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
                 >
-                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.confirmPassword && <p className="text-destructive text-xs">{errors.confirmPassword}</p>}
             </div>
 
-            {/* Bio */}
-            <div className="space-y-1.5">
-              <Label htmlFor="bio" className="text-foreground">
-                Bio <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
-              <Textarea
-                id="bio"
-                placeholder="Tell us a little about yourself…"
-                value={form.bio}
-                onChange={(e) => updateField('bio', e.target.value)}
-                rows={3}
-                disabled={isPending}
-                className="resize-none"
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                Bio <span className="text-muted-foreground/50">(optional)</span>
+              </label>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Tell us about yourself..."
+                rows={2}
+                className="w-full bg-secondary/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none transition-all duration-200 resize-none"
+                onFocus={inputFocusStyle}
+                onBlur={inputBlurStyle}
               />
             </div>
 
-            {/* Submit */}
-            <Button
+            <button
               type="submit"
-              className="w-full mt-2"
-              disabled={isPending}
+              disabled={isLoading}
+              className="w-full py-3 rounded-xl font-semibold text-background transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+              style={{
+                background: 'linear-gradient(135deg, var(--neon-violet), var(--neon-pink))',
+                boxShadow: isLoading ? 'none' : '0 0 20px var(--neon-violet)',
+              }}
             >
-              {isPending ? (
+              {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating account…
+                  <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+                  Creating account...
                 </>
               ) : (
-                'Create Account'
+                <>
+                  <UserPlus size={18} />
+                  Create Account
+                </>
               )}
-            </Button>
+            </button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Already have an account?{' '}
-            <a
-              href="/login"
-              onClick={(e) => { e.preventDefault(); navigate({ to: '/login' }); }}
-              className="text-primary hover:underline font-medium"
-            >
-              Sign in
-            </a>
-          </p>
+          <div className="mt-6 text-center">
+            <p className="text-muted-foreground text-sm">
+              Already have an account?{' '}
+              <button
+                onClick={() => navigate({ to: '/login' })}
+                className="font-medium transition-colors"
+                style={{ color: 'var(--neon-violet)' }}
+                onMouseEnter={(e) => { (e.target as HTMLElement).style.textShadow = '0 0 8px var(--neon-violet)'; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.textShadow = ''; }}
+              >
+                Login here
+              </button>
+            </p>
+          </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Built with ❤️ using{' '}
-          <a
-            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline"
-          >
-            caffeine.ai
-          </a>
-        </p>
+        <div className="text-center mt-6">
+          <p className="text-muted-foreground text-xs">
+            Built with <span style={{ color: 'var(--neon-pink)' }}>♥</span> using{' '}
+            <a
+              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+              style={{ color: 'var(--neon-violet)' }}
+            >
+              caffeine.ai
+            </a>
+          </p>
+          <p className="text-muted-foreground/50 text-xs mt-1">© {new Date().getFullYear()} ShareServe</p>
+        </div>
       </div>
     </div>
   );

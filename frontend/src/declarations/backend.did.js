@@ -97,7 +97,12 @@ export const idlService = IDL.Service({
     ),
   'getUserPhotoFeed' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
   'getUserPhotos' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
-  'getUserProfile' : IDL.Func([Username], [UserProfile], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
+  'getUserProfileByUsername' : IDL.Func([Username], [UserProfile], ['query']),
   'getUserVideoFeed' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
   'getUserVideos' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
@@ -207,7 +212,12 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getUserPhotos' : IDL.Func([Username], [IDL.Vec(ExternalBlob)], ['query']),
-    'getUserProfile' : IDL.Func([Username], [UserProfile], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
+    'getUserProfileByUsername' : IDL.Func([Username], [UserProfile], ['query']),
     'getUserVideoFeed' : IDL.Func(
         [Username],
         [IDL.Vec(ExternalBlob)],
